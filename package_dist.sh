@@ -14,7 +14,7 @@ mkdir -p "$DIST_DIR"
 echo "Creating distribution package..."
 
 # Copy artifacts (assuming build scripts have run)
-cp vendor/binjgb/docs/binjgb.{js,wasm} "$DIST_DIR/"
+cp vendor/binjgb/out/Wasm/binjgb.{js,wasm} "$DIST_DIR/"
 if [ -f "pokered.gbc" ]; then cp pokered.gbc "$DIST_DIR/"; else echo "Warning: pokered.gbc not found"; fi
 
 # Copy required directories

@@ -32,6 +32,11 @@ export class BattleController {
   private framesSinceLastCheck: number = 0;
   private gameReady: boolean = false;
   
+  // Breakpoint-based injection state
+  private static readonly LOAD_MON_FRONT_SPRITE_ADDR = 0x1665;
+  private injectionPending: boolean = false;
+  private breakpointInstalled: boolean = false;
+  
   constructor(emulator: EmulatorWrapper, options: BattleControllerOptions = {}) {
     this.emulator = emulator;
     // Generation service can be set later via setGenerationService()
@@ -57,6 +62,11 @@ export class BattleController {
     this.setupTestBattleMode();
     this.options.onPokemonGenerated?.(pokemon);
     this.setState('idle');
+    
+    // Install breakpoint NOW so it's ready when the battle starts
+    // LoadMonFrontSprite will be called during battle transition, before wIsInBattle changes
+    this.injectionPending = true;
+    this.installInjectionBreakpoint();
   }
   
   /**
@@ -169,9 +179,10 @@ export class BattleController {
       console.log('Battle started! State:', currentBattleState);
       this.setState('in_battle');
       
-      // If we have a generated pokemon, inject it now
-      if (this.currentPokemon) {
-        this.injectCurrentPokemon();
+      // Breakpoint should already be installed from when Pokemon was prepared
+      // If not, the injection may have already happened or will be missed
+      if (!this.breakpointInstalled && this.currentPokemon) {
+        console.warn('Battle started but breakpoint not installed - may have missed injection window');
       }
       
       // Start pre-fetching the NEXT Pokemon while battle runs
@@ -213,6 +224,10 @@ export class BattleController {
         // Set up the enemy in game memory for the next battle
         this.setupTestBattleMode();
         this.setState('idle');
+        
+        // Install breakpoint for next battle
+        this.injectionPending = true;
+        this.installInjectionBreakpoint();
         return;
       }
     }
@@ -231,6 +246,10 @@ export class BattleController {
       // Set up the enemy in game memory for the next battle
       this.setupTestBattleMode();
       this.setState('idle');
+      
+      // Install breakpoint for next battle
+      this.injectionPending = true;
+      this.installInjectionBreakpoint();
     } catch (error) {
       console.error('Failed to prepare next Pokemon:', error);
       this.setState('idle');
@@ -238,14 +257,66 @@ export class BattleController {
   }
   
   /**
-   * Inject the current generated Pokemon into battle
+   * Force trigger a battle (for testing)
    */
-  private injectCurrentPokemon(): void {
-    if (!this.currentPokemon) return;
+  forceBattle(): void {
+    if (!this.gameReady) {
+      console.warn('Game not ready yet');
+      return;
+    }
     
-    console.log(`Injecting Pokemon: ${this.currentPokemon.name} Lv.${this.currentPokemon.level}`);
+    if (!this.currentPokemon) {
+      console.warn('No pokemon generated yet');
+      return;
+    }
     
-    // Write enemy species (using a placeholder for now - Mew because it's flexible)
+    // Set up test battle mode
+    this.setupTestBattleMode();
+  }
+
+  /**
+   * Install a breakpoint at LoadMonFrontSprite to intercept sprite loading
+   */
+  private installInjectionBreakpoint(): void {
+    if (this.breakpointInstalled) {
+      console.log('Breakpoint already installed, skipping');
+      return;
+    }
+    
+    console.log(`Installing breakpoint at LoadMonFrontSprite ($${BattleController.LOAD_MON_FRONT_SPRITE_ADDR.toString(16)})`);
+    
+    this.emulator.addBreakpoint(
+      BattleController.LOAD_MON_FRONT_SPRITE_ADDR,
+      () => this.onLoadMonFrontSpriteBreakpoint()
+    );
+    
+    this.breakpointInstalled = true;
+  }
+  
+  /**
+   * Called when LoadMonFrontSprite breakpoint is hit
+   * This is our one-shot injection point
+   */
+  private onLoadMonFrontSpriteBreakpoint(): void {
+    // Check if we're actually in battle - LoadMonFrontSprite is also called on title screen
+    const isInBattle = this.emulator.readMemory(WRAM.wIsInBattle);
+    if (isInBattle === 0) {
+      console.log('Breakpoint hit but not in battle (title screen?), letting normal code run');
+      // Don't skip - let the normal sprite loading happen
+      return;
+    }
+    
+    if (!this.injectionPending || !this.currentPokemon) {
+      console.log('Breakpoint hit in battle but no injection pending, skipping function');
+      this.skipCurrentFunction();
+      return;
+    }
+    
+    console.log(`🎯 Breakpoint hit! Injecting ${this.currentPokemon.name}`);
+    
+    // ===== INJECT POKEMON DATA =====
+    
+    // Write enemy species (using Mew as base species)
     this.emulator.writeMemory(WRAM.wEnemyMonSpecies2, POKEMON.MEW);
     this.emulator.writeMemory(WRAM.wEnemyMonSpecies, POKEMON.MEW);
     
@@ -269,10 +340,7 @@ export class BattleController {
       this.emulator.writeMemory(statsAddr + 3, stats.speed);
       this.emulator.writeMemory(statsAddr + 4, stats.special);
     }
-
-    // Inject Sprite
-    this.injectSprite(this.currentPokemon).catch(console.error);
-
+    
     // Write moves if we have them
     if (this.currentPokemon.moves?.length) {
       const movesAddr = WRAM.wEnemyMonMoves;
@@ -283,94 +351,106 @@ export class BattleController {
         );
       }
     }
+    
+    // ===== INJECT SPRITE =====
+    this.injectSpriteSync(this.currentPokemon);
+    
+    // ===== SKIP ORIGINAL FUNCTION =====
+    // We've already written to VRAM, so skip LoadMonFrontSprite to prevent overwrite
+    this.skipCurrentFunction();
+    
+    // Mark injection done for this battle
+    this.injectionPending = false;
+    
+    // Remove the breakpoint (one-shot)
+    this.emulator.removeBreakpoint(BattleController.LOAD_MON_FRONT_SPRITE_ADDR);
+    this.breakpointInstalled = false;
+    
+    console.log('✅ One-shot injection complete!');
   }
   
   /**
-   * Force trigger a battle (for testing)
+   * Skip the current function by jumping to a RET instruction
    */
-  forceBattle(): void {
-    if (!this.gameReady) {
-      console.warn('Game not ready yet');
-      return;
+  private skipCurrentFunction(): void {
+    // Find a RET instruction (0xC9) to jump to
+    const retAddr = this.findRetAddress();
+    if (retAddr !== null) {
+      console.log(`Skipping to RET at $${retAddr.toString(16)}`);
+      this.emulator.setPC(retAddr);
+    } else {
+      console.warn('Could not find RET instruction, breakpoint may cause issues');
     }
-    
-    if (!this.currentPokemon) {
-      console.warn('No pokemon generated yet');
-      return;
-    }
-    
-    // Set up test battle mode
-    this.setupTestBattleMode();
   }
-
+  
+  // Known RET instruction address in bank 0 (after DisableLCD routine at $0060)
+  // This is a safe RET to jump to that will just return to the caller
+  private static readonly KNOWN_RET_ADDR = 0x0073;
+  
   /**
-   * Encodes and injects a sprite into VRAM
-   * Retries multiple times to ensure it overwrites the game's default loading
-   * and verifies the write.
+   * Find a RET instruction in ROM to jump to
    */
-  private async injectSprite(pokemon: GeneratedPokemon): Promise<void> {
-    try {
-      // Use AI-generated sprite if available, otherwise use sample
-      let spriteData: Uint8Array;
-      
-      if (pokemon.sprite2bpp && pokemon.sprite2bpp.length > 0) {
-        console.log('Using AI-generated sprite data');
-        spriteData = pokemon.sprite2bpp;
-      } else {
-        // Fallback to sample sprite
-        const sampleId = (pokemon.name.length % 2) + 1;
-        const imageUrl = `./samples/sample${sampleId}.png`;
-        console.log(`Encoding sprite from ${imageUrl}...`);
-        spriteData = await this.spriteEncoder.encode(imageUrl);
+  private findRetAddress(): number | null {
+    // First try scanning forward from LoadMonFrontSprite
+    const startAddr = BattleController.LOAD_MON_FRONT_SPRITE_ADDR;
+    
+    for (let offset = 1; offset < 200; offset++) {
+      const addr = startAddr + offset;
+      const opcode = this.emulator.readMemory(addr);
+      if (opcode === 0xC9) { // RET
+        return addr;
       }
-      
-      console.log(`Injecting ${spriteData.length} bytes of sprite data to VRAM 0x9000...`);
-      
-      // The game writes to VRAM during the battle intro.
-      // We need to keep overwriting it until the battle is stable.
-      // VRAM 0x9000 is vFrontPic (7x7 tiles = 49 * 16 bytes = 784 bytes)
-      
-      let attempts = 0;
-      const inject = () => {
-         // Debug: Check scanline
-         const rLY = this.emulator.readMemory(0xFF44);
-         const lcdcAddr = 0xFF40;
-         const originalLcdc = this.emulator.readMemory(lcdcAddr);
-         const isLcdOn = (originalLcdc & 0x80) !== 0;
-
-         // Hack: Turn off LCD to allow VRAM write
-         if (isLcdOn) {
-             this.emulator.writeMemory(lcdcAddr, originalLcdc & 0x7F);
-         }
-
-         this.emulator.writeMemoryBlock(0x9000, spriteData);
-         
-         // Restore LCD
-         if (isLcdOn) {
-             this.emulator.writeMemory(lcdcAddr, originalLcdc);
-         }
-         
-         /*
-         // Verify write (debug)
-         const check = this.emulator.readMemory(0x9000);
-         if (check !== spriteData[0]) {
-             console.warn(`Injection mismatch! Expected ${spriteData[0]}, got ${check}. rLY: ${rLY}`);
-         } else {
-             console.log(`Injection verified!`);
-         }
-         */
-         
-         attempts++;
-         if (attempts < 20) { // Keep trying for ~2 seconds (every 100ms)
-             setTimeout(inject, 100);
-         }
-      };
-      
-      // Start injection loop
-      inject();
-      
-    } catch (error) {
-      console.error('Failed to inject sprite:', error);
+    }
+    
+    // Fallback: use a known RET address in bank 0
+    // From pokered disassembly, address $0073 contains a RET after DisableLCD
+    console.log('Using fallback RET address');
+    return BattleController.KNOWN_RET_ADDR;
+  }
+  
+  /**
+   * Synchronously inject sprite data to VRAM
+   * Called within breakpoint callback - no setTimeout/async allowed
+   */
+  private injectSpriteSync(pokemon: GeneratedPokemon): void {
+    let spriteData: Uint8Array | null = null;
+    
+    if (pokemon.sprite2bpp && pokemon.sprite2bpp.length > 0) {
+      console.log('Using AI-generated sprite data');
+      spriteData = pokemon.sprite2bpp;
+    } else {
+      // Fallback: we can't load async in breakpoint callback
+      // Use a simple fallback sprite or skip sprite injection
+      console.warn('No sprite2bpp data available, skipping sprite injection');
+      return;
+    }
+    
+    console.log(`Injecting ${spriteData.length} bytes of sprite data to VRAM 0x9000...`);
+    
+    // Use LCD Disable Hack for guaranteed VRAM access
+    const lcdcAddr = 0xFF40;
+    const originalLcdc = this.emulator.readMemory(lcdcAddr);
+    const isLcdOn = (originalLcdc & 0x80) !== 0;
+    
+    // Disable LCD to ensure VRAM is accessible
+    if (isLcdOn) {
+      this.emulator.writeMemory(lcdcAddr, originalLcdc & 0x7F);
+    }
+    
+    // Write sprite data to vFrontPic (0x9000)
+    this.emulator.writeMemoryBlock(0x9000, spriteData);
+    
+    // Restore LCD
+    if (isLcdOn) {
+      this.emulator.writeMemory(lcdcAddr, originalLcdc);
+    }
+    
+    // Verify write
+    const check = this.emulator.readMemory(0x9000);
+    if (check !== spriteData[0]) {
+      console.warn(`Sprite injection mismatch! Expected ${spriteData[0]}, got ${check}`);
+    } else {
+      console.log('Sprite injection verified!');
     }
   }
 }

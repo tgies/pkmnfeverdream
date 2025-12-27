@@ -48,6 +48,13 @@ interface BinjgbModule {
   // Memory views
   HEAPU8: Uint8Array;
   HEAPU32: Uint32Array;
+  
+  // Debugger / Breakpoint support
+  _emulator_set_breakpoint(emu: number, addr: number): void;
+  _emulator_clear_breakpoints(emu: number): void;
+  _emulator_get_PC(emu: number): number;
+  _emulator_set_PC(emu: number, pc: number): void;
+  _emulator_get_ticks_f64(emu: number): number;
 }
 
 // Cache for the loaded Binjgb factory
@@ -118,6 +125,9 @@ export class EmulatorWrapper {
   private frameBuffer: Uint8Array | null = null;
   private currentTicks: number = 0;
   
+  // Breakpoint callback registry: address -> callback
+  private breakpoints: Map<number, () => void> = new Map();
+  
   /**
    * Initialize the emulator with a ROM
    */
@@ -156,13 +166,46 @@ export class EmulatorWrapper {
   }
   
   /**
-   * Run the emulator for one frame
+   * Run the emulator for one frame (breakpoint-aware)
+   * 
+   * When a breakpoint is hit, the emulator stops early. We detect this,
+   * call the registered callback, and continue until the frame is complete.
    */
   runFrame(): void {
     if (!this.module || !this.emulator) return;
     
-    this.currentTicks += TICKS_PER_FRAME;
-    this.module._emulator_run_until_f64(this.emulator, this.currentTicks);
+    const targetTicks = this.currentTicks + TICKS_PER_FRAME;
+    
+    while (this.currentTicks < targetTicks) {
+      this.module._emulator_run_until_f64(this.emulator, targetTicks);
+      const actualTicks = this.module._emulator_get_ticks_f64(this.emulator);
+      
+      // Check if we stopped early (possibly a breakpoint)
+      if (actualTicks < targetTicks) {
+        const pc = this.getPC();
+        const callback = this.breakpoints.get(pc);
+        
+        if (callback) {
+          // Execute the breakpoint callback (e.g., injection logic)
+          callback();
+          
+          // If PC didn't change after callback, we'd loop forever - break out
+          if (this.getPC() === pc) {
+            console.warn(`Breakpoint callback at $${pc.toString(16)} did not change PC, breaking to avoid infinite loop`);
+            this.currentTicks = actualTicks;
+            break;
+          }
+        } else {
+          // Stopped but no callback registered - might be audio buffer full or other event
+          if (actualTicks === this.currentTicks) {
+            // No progress made, break to avoid infinite loop
+            break;
+          }
+        }
+      }
+      
+      this.currentTicks = actualTicks;
+    }
   }
   
   /**
@@ -237,5 +280,72 @@ export class EmulatorWrapper {
     this.joypadBuffer = 0;
     this.romPtr = 0;
     this.frameBuffer = null;
+    this.breakpoints.clear();
+  }
+  
+  // ========== Debugger / Breakpoint API ==========
+  
+  /**
+   * Get the current Program Counter (PC)
+   */
+  getPC(): number {
+    if (!this.module || !this.emulator) return 0;
+    return this.module._emulator_get_PC(this.emulator);
+  }
+  
+  /**
+   * Set the Program Counter (PC)
+   */
+  setPC(addr: number): void {
+    if (!this.module || !this.emulator) return;
+    this.module._emulator_set_PC(this.emulator, addr);
+  }
+  
+  /**
+   * Add a breakpoint at the specified address with a callback
+   * When the emulator reaches this address, execution pauses and the callback is invoked.
+   */
+  addBreakpoint(addr: number, callback: () => void): void {
+    if (!this.module || !this.emulator) return;
+    
+    // Register callback
+    this.breakpoints.set(addr, callback);
+    
+    // Set the hardware breakpoint in the emulator
+    this.module._emulator_set_breakpoint(this.emulator, addr);
+    
+    console.log(`Breakpoint set at $${addr.toString(16).toUpperCase()}`);
+  }
+  
+  /**
+   * Remove a breakpoint at the specified address
+   */
+  removeBreakpoint(addr: number): void {
+    this.breakpoints.delete(addr);
+    
+    // Note: binjgb only has clear_breakpoints (clears all), not remove single.
+    // We'll rebuild breakpoints after clearing.
+    if (this.module && this.emulator) {
+      this.module._emulator_clear_breakpoints(this.emulator);
+      
+      // Re-add remaining breakpoints
+      for (const bpAddr of this.breakpoints.keys()) {
+        this.module._emulator_set_breakpoint(this.emulator, bpAddr);
+      }
+    }
+    
+    console.log(`Breakpoint removed at $${addr.toString(16).toUpperCase()}`);
+  }
+  
+  /**
+   * Clear all breakpoints
+   */
+  clearBreakpoints(): void {
+    if (!this.module || !this.emulator) return;
+    
+    this.breakpoints.clear();
+    this.module._emulator_clear_breakpoints(this.emulator);
+    
+    console.log('All breakpoints cleared');
   }
 }

@@ -592,6 +592,16 @@
         }
       }
     </script>
+    <script>
+      // Global emulator stub required by binjgb when compiled with RGBDS_LIVE
+      // This must be defined before the WASM module loads
+      // Using var (not let/const) to ensure it's truly global
+      var emulator = {
+        serialCallback: function(value) {
+          // No-op - we don't use serial debugging
+        }
+      };
+    </script>
   </head>
   <body>
     <h1>pokemon_feverdream</h1>

@@ -7,6 +7,15 @@ import { BattleController, type BattleState } from './battle/BattleController';
 import { PokemonGenerationService, type GeneratedPokemon } from './services/PokemonGenerationService';
 import { getTypeName } from './services/gemini';
 
+// Global emulator stub required by binjgb when compiled with RGBDS_LIVE
+// The C code calls EM_ASM({emulator.serialCallback($0);}, value) for serial debugging
+(window as any).emulator = {
+  serialCallback: (_value: number) => {
+    // No-op - we don't use serial debugging
+  }
+};
+
+
 // DOM elements
 const canvas = document.getElementById('screen') as HTMLCanvasElement;
 const ctx = canvas.getContext('2d')!;
