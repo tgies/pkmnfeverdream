@@ -40,6 +40,9 @@ const thresholdPreviewEl = document.getElementById('threshold-preview') as HTMLC
 const regenerateBtnEl = document.getElementById('regenerate-btn') as HTMLButtonElement;
 const resetNamePromptEl = document.getElementById('reset-name-prompt') as HTMLButtonElement;
 const resetImagePromptEl = document.getElementById('reset-image-prompt') as HTMLButtonElement;
+const nameTemperatureEl = document.getElementById('name-temperature') as HTMLInputElement;
+const nameTemperatureValEl = document.getElementById('name-temperature-val')!;
+const resetNameTempEl = document.getElementById('reset-name-temp') as HTMLButtonElement;
 
 // Camera Mode DOM elements
 const gameContainerEl = document.getElementById('game-container')!;
@@ -338,6 +341,8 @@ function setupSettings(): void {
   thresholdBlackValEl.textContent = String(config.thresholds.black);
   thresholdDarkValEl.textContent = String(config.thresholds.darkGray);
   thresholdLightValEl.textContent = String(config.thresholds.lightGray);
+  nameTemperatureEl.value = String(config.nameTemperature);
+  nameTemperatureValEl.textContent = config.nameTemperature.toFixed(1);
 
   // Prompt template changes (save on blur to avoid constant updates while typing)
   namePromptEl.addEventListener('blur', () => {
@@ -361,6 +366,22 @@ function setupSettings(): void {
     const defaultPrompt = ConfigService.resetImagePrompt();
     imagePromptEl.value = defaultPrompt;
     console.log('↺ Image prompt reset to default');
+  });
+
+  // Name temperature slider
+  nameTemperatureEl.addEventListener('input', () => {
+    const value = parseFloat(nameTemperatureEl.value);
+    nameTemperatureValEl.textContent = value.toFixed(1);
+    ConfigService.setNameTemperature(value);
+  });
+
+  // Reset name temperature button
+  resetNameTempEl.addEventListener('click', () => {
+    const defaultTemp = ConfigService.getDefaultNameTemperature();
+    ConfigService.setNameTemperature(defaultTemp);
+    nameTemperatureEl.value = String(defaultTemp);
+    nameTemperatureValEl.textContent = defaultTemp.toFixed(1);
+    console.log('↺ Name temperature reset to default');
   });
 
   // Threshold slider changes (live update)

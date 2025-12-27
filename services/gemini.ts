@@ -60,11 +60,14 @@ export async function generatePokemonName(primaryType: string): Promise<string> 
   
   const prompt = ConfigService.getNamePrompt(primaryType);
 
+  const temperature = ConfigService.getNameTemperature();
+
   try {
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
       contents: prompt,
       config: {
+        temperature,
         thinkingConfig: {
           thinkingLevel: ThinkingLevel.MINIMAL,
         },
@@ -82,6 +85,9 @@ export async function generatePokemonName(primaryType: string): Promise<string> 
         const fallbackResponse = await ai.models.generateContent({
           model: 'gemini-2.5-flash',
           contents: prompt,
+          config: {
+            temperature,
+          },
           // Note: thinkingConfig is omitted as gemini-2.5-flash does not support thinkingLevel
         });
 

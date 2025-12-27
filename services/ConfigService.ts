@@ -15,6 +15,7 @@ export interface ConfigState {
   imagePromptTemplate: string;
   cameraPromptTemplate: string;
   thresholds: ThresholdConfig;
+  nameTemperature: number;
 }
 
 export type ConfigChangeListener = (config: ConfigState) => void;
@@ -40,6 +41,8 @@ const DEFAULT_THRESHOLDS: ThresholdConfig = {
   lightGray: 224,
 };
 
+const DEFAULT_NAME_TEMPERATURE = 1.1;
+
 /**
  * Singleton configuration service
  */
@@ -53,6 +56,7 @@ class ConfigServiceClass {
       imagePromptTemplate: DEFAULT_IMAGE_PROMPT,
       cameraPromptTemplate: DEFAULT_CAMERA_PROMPT,
       thresholds: { ...DEFAULT_THRESHOLDS },
+      nameTemperature: DEFAULT_NAME_TEMPERATURE,
     };
   }
 
@@ -93,6 +97,28 @@ class ConfigServiceClass {
    */
   getThresholds(): Readonly<ThresholdConfig> {
     return this.state.thresholds;
+  }
+
+  /**
+   * Get name generation temperature
+   */
+  getNameTemperature(): number {
+    return this.state.nameTemperature;
+  }
+
+  /**
+   * Set name generation temperature
+   */
+  setNameTemperature(temperature: number): void {
+    this.state.nameTemperature = temperature;
+    this.notifyListeners();
+  }
+
+  /**
+   * Get default name temperature
+   */
+  getDefaultNameTemperature(): number {
+    return DEFAULT_NAME_TEMPERATURE;
   }
 
   /**
@@ -184,6 +210,7 @@ class ConfigServiceClass {
       imagePromptTemplate: DEFAULT_IMAGE_PROMPT,
       cameraPromptTemplate: DEFAULT_CAMERA_PROMPT,
       thresholds: { ...DEFAULT_THRESHOLDS },
+      nameTemperature: DEFAULT_NAME_TEMPERATURE,
     };
     this.notifyListeners();
   }
