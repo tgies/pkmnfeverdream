@@ -1,1053 +1,1062 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>pokemon_feverdream</title>
-    <style>
-      :root {
-        --bg: #050505;
-        --fg: #b0b0b0;
-        --dim: #555;
-        --border: #222;
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pokemon_feverdream</title>
+  <style>
+    :root {
+      --bg: #050505;
+      --fg: #b0b0b0;
+      --dim: #555;
+      --border: #222;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    /* Custom scrollbar styling */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--bg);
+      border-left: 1px solid var(--border);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #333;
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: #444;
+    }
+
+    ::-webkit-scrollbar-corner {
+      background: var(--bg);
+    }
+
+    /* Firefox scrollbar */
+    * {
+      scrollbar-width: thin;
+      scrollbar-color: #333 var(--bg);
+    }
+
+    body {
+      margin: 0;
+      padding: 4rem 2rem;
+      background: var(--bg);
+      color: var(--fg);
+      font-family: "Courier New", Courier, monospace;
+      font-size: 13px;
+      line-height: 1.5;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    h1 {
+      font-size: 14px;
+      font-weight: normal;
+      letter-spacing: 0.5em;
+      margin-bottom: 4rem;
+      color: #fff;
+      text-transform: lowercase;
+      opacity: 0.8;
+    }
+
+    .main-container {
+      display: flex;
+      flex-direction: row;
+      align-items: flex-start;
+      justify-content: center;
+      gap: 3rem;
+      flex-wrap: wrap;
+      width: 100%;
+      max-width: 1600px;
+    }
+
+    .pane {
+      width: 340px;
+      padding-top: 10px;
+    }
+
+    /* Left Pane: Explanation */
+    #explanation-pane {
+      border-top: 1px solid var(--border);
+      color: #888;
+      font-size: 12px;
+      text-align: justify;
+    }
+
+    #explanation-pane p {
+      margin-bottom: 1.5rem;
+    }
+
+    /* Drawer toggle button - hidden on desktop */
+    .drawer-toggle {
+      display: none;
+    }
+
+    .drawer-content {
+      /* On desktop, the drawer content is always visible */
+      display: block;
+    }
+
+    strong {
+      color: #aaa;
+      font-weight: normal;
+      text-decoration: underline;
+      text-decoration-thickness: 1px;
+      text-underline-offset: 3px;
+    }
+
+    /* Center Pane: Game */
+    #game-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    #game-container {
+      position: relative;
+      border: 1px solid #1a1a1a;
+      padding: 4px;
+      background: #000;
+    }
+
+    canvas#screen {
+      display: block;
+      image-rendering: pixelated;
+      width: 640px;
+      height: 576px;
+      background: #080808;
+    }
+
+    .controls-hint {
+      font-size: 11px;
+      color: #666;
+      text-align: center;
+      font-family: monospace;
+      letter-spacing: 1px;
+    }
+
+    #status {
+      font-size: 11px;
+      color: #444;
+      text-align: center;
+      font-family: monospace;
+      letter-spacing: 1px;
+    }
+
+    /* Right Pane: Info */
+    #info-panel {
+      border-top: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+      align-items: center;
+      max-height: 600px;
+      overflow-y: auto;
+    }
+
+    .image-preview {
+      width: 224px;
+      height: 224px;
+      border: 1px solid #111;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #020202;
+      margin-top: 1rem;
+    }
+
+    #raw-image {
+      width: 100%;
+      height: 100%;
+      image-rendering: pixelated;
+      display: none;
+      opacity: 0.9;
+    }
+
+    #raw-image.loaded {
+      display: block;
+    }
+
+    #pokemon-info {
+      width: 100%;
+      padding: 0 1rem;
+    }
+
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      border-bottom: 1px solid #111;
+      padding-bottom: 6px;
+      margin-bottom: 10px;
+      font-size: 12px;
+    }
+
+    .info-label {
+      color: #555;
+      text-transform: uppercase;
+      font-size: 10px;
+      letter-spacing: 1px;
+    }
+
+    /* Overlay */
+    #generation-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.95);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+      transition: opacity 0.5s ease;
+    }
+
+    #generation-overlay.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .dreaming-text {
+      color: #333;
+      font-size: 12px;
+      letter-spacing: 4px;
+      animation: breathe 3s infinite ease-in-out;
+    }
+
+    @keyframes breathe {
+
+      0%,
+      100% {
+        color: #333;
       }
 
-      * {
-        box-sizing: border-box;
+      50% {
+        color: #666;
       }
+    }
 
-      /* Custom scrollbar styling */
-      ::-webkit-scrollbar {
-        width: 8px;
-        height: 8px;
-      }
-
-      ::-webkit-scrollbar-track {
-        background: var(--bg);
-        border-left: 1px solid var(--border);
-      }
-
-      ::-webkit-scrollbar-thumb {
-        background: #333;
-        border-radius: 4px;
-      }
-
-      ::-webkit-scrollbar-thumb:hover {
-        background: #444;
-      }
-
-      ::-webkit-scrollbar-corner {
-        background: var(--bg);
-      }
-
-      /* Firefox scrollbar */
-      * {
-        scrollbar-width: thin;
-        scrollbar-color: #333 var(--bg);
-      }
-
-      body {
-        margin: 0;
-        padding: 4rem 2rem;
-        background: var(--bg);
-        color: var(--fg);
-        font-family: "Courier New", Courier, monospace;
-        font-size: 13px;
-        line-height: 1.5;
-        display: flex;
+    /* Mobile layout adjustments */
+    @media (max-width: 1300px) {
+      .main-container {
         flex-direction: column;
         align-items: center;
-        min-height: 100vh;
-      }
-
-      h1 {
-        font-size: 14px;
-        font-weight: normal;
-        letter-spacing: 0.5em;
-        margin-bottom: 4rem;
-        color: #fff;
-        text-transform: lowercase;
-        opacity: 0.8;
-      }
-
-      .main-container {
-        display: flex;
-        flex-direction: row;
-        align-items: flex-start;
-        justify-content: center;
-        gap: 3rem;
-        flex-wrap: wrap;
-        width: 100%;
-        max-width: 1600px;
+        gap: 4rem;
       }
 
       .pane {
-        width: 340px;
-        padding-top: 10px;
-      }
-
-      /* Left Pane: Explanation */
-      #explanation-pane {
-        border-top: 1px solid var(--border);
-        color: #888;
-        font-size: 12px;
-        text-align: justify;
-      }
-
-      #explanation-pane p {
-        margin-bottom: 1.5rem;
-      }
-
-      /* Drawer toggle button - hidden on desktop */
-      .drawer-toggle {
-        display: none;
-      }
-
-      .drawer-content {
-        /* On desktop, the drawer content is always visible */
-        display: block;
-      }
-
-      strong {
-        color: #aaa;
-        font-weight: normal;
-        text-decoration: underline;
-        text-decoration-thickness: 1px;
-        text-underline-offset: 3px;
-      }
-
-      /* Center Pane: Game */
-      #game-wrapper {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 0.5rem;
-      }
-
-      #game-container {
-        position: relative;
-        border: 1px solid #1a1a1a;
-        padding: 4px;
-        background: #000;
-      }
-
-      canvas#screen {
-        display: block;
-        image-rendering: pixelated;
         width: 640px;
-        height: 576px;
-        background: #080808;
+        max-width: 100%;
       }
 
-      .controls-hint {
-        font-size: 11px;
-        color: #666;
-        text-align: center;
-        font-family: monospace;
-        letter-spacing: 1px;
+      #game-wrapper {
+        order: -1;
       }
 
-      #status {
-        font-size: 11px;
-        color: #444;
-        text-align: center;
-        font-family: monospace;
-        letter-spacing: 1px;
-      }
-
-      /* Right Pane: Info */
       #info-panel {
-        border-top: 1px solid var(--border);
-        display: flex;
-        flex-direction: column;
-        gap: 2rem;
-        align-items: center;
-        max-height: 600px;
-        overflow-y: auto;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: flex-start;
       }
 
       .image-preview {
-        width: 224px;
-        height: 224px;
-        border: 1px solid #111;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: #020202;
-        margin-top: 1rem;
+        margin-top: 0;
       }
+    }
 
-      #raw-image {
+    @media (max-width: 700px) {
+      canvas#screen {
         width: 100%;
-        height: 100%;
-        image-rendering: pixelated;
-        display: none;
-        opacity: 0.9;
+        height: auto;
       }
 
-      #raw-image.loaded {
-        display: block;
+      .pane,
+      #game-wrapper {
+        width: 100%;
+      }
+
+      #info-panel {
+        flex-direction: row;
+        align-items: flex-start;
+        gap: 1rem;
+        border-top: none;
+        padding-top: 0;
+      }
+
+      .image-preview {
+        width: 100px;
+        height: 100px;
+        flex-shrink: 0;
       }
 
       #pokemon-info {
-        width: 100%;
-        padding: 0 1rem;
-      }
-
-      .info-row {
-        display: flex;
-        justify-content: space-between;
-        border-bottom: 1px solid #111;
-        padding-bottom: 6px;
-        margin-bottom: 10px;
-        font-size: 12px;
-      }
-
-      .info-label {
-        color: #555;
-        text-transform: uppercase;
-        font-size: 10px;
-        letter-spacing: 1px;
-      }
-
-      /* Overlay */
-      #generation-overlay {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: rgba(0, 0, 0, 0.95);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 10;
-        transition: opacity 0.5s ease;
-      }
-
-      #generation-overlay.hidden {
-        opacity: 0;
-        pointer-events: none;
-      }
-
-      .dreaming-text {
-        color: #333;
-        font-size: 12px;
-        letter-spacing: 4px;
-        animation: breathe 3s infinite ease-in-out;
-      }
-
-      @keyframes breathe {
-        0%,
-        100% {
-          color: #333;
-        }
-        50% {
-          color: #666;
-        }
-      }
-
-      /* Mobile layout adjustments */
-      @media (max-width: 1300px) {
-        .main-container {
-          flex-direction: column;
-          align-items: center;
-          gap: 4rem;
-        }
-
-        .pane {
-          width: 640px;
-          max-width: 100%;
-        }
-
-        #game-wrapper {
-          order: -1;
-        }
-
-        #info-panel {
-          flex-direction: row;
-          justify-content: space-between;
-          align-items: flex-start;
-        }
-        .image-preview {
-          margin-top: 0;
-        }
-      }
-
-      @media (max-width: 700px) {
-        canvas#screen {
-          width: 100%;
-          height: auto;
-        }
-        .pane,
-        #game-wrapper {
-          width: 100%;
-        }
-        #info-panel {
-          flex-direction: row;
-          align-items: flex-start;
-          gap: 1rem;
-          border-top: none;
-          padding-top: 0;
-        }
-
-        .image-preview {
-          width: 100px;
-          height: 100px;
-          flex-shrink: 0;
-        }
-
-        #pokemon-info {
-          flex: 1;
-          padding: 0;
-        }
-        .controls-hint {
-          display: none;
-        }
-        body {
-          padding: 1rem 1rem 220px 1rem;
-        }
-        h1 {
-          font-size: 12px;
-          margin-bottom: 1rem;
-          letter-spacing: 0.3em;
-        }
-
-        /* Explanation pane - fixed corner toggle */
-        #explanation-pane {
-          position: fixed;
-          bottom: 190px;
-          right: 0.5rem;
-          width: auto;
-          border: none;
-          padding: 0;
-          z-index: 200;
-        }
-
-        .drawer-toggle {
-          display: flex;
-          align-items: center;
-          gap: 0.4em;
-          padding: 4px 8px;
-          background: rgba(20, 20, 20, 0.9);
-          border: 1px solid #333;
-          border-radius: 3px;
-          color: #666;
-          font-family: inherit;
-          font-size: 9px;
-          letter-spacing: 0.5px;
-          cursor: pointer;
-        }
-
-        .drawer-toggle:active {
-          background: rgba(30, 30, 30, 0.95);
-        }
-
-        .drawer-toggle .toggle-icon {
-          font-size: 7px;
-          transition: transform 0.2s ease;
-        }
-
-        .drawer-toggle[aria-expanded="true"] .toggle-icon {
-          transform: rotate(180deg);
-        }
-
-        .drawer-content {
-          position: absolute;
-          bottom: 100%;
-          right: 0;
-          width: 280px;
-          max-width: 85vw;
-          margin-bottom: 4px;
-          background: rgba(10, 10, 10, 0.97);
-          border: 1px solid #333;
-          border-radius: 3px;
-          max-height: 0;
-          overflow: hidden;
-          opacity: 0;
-          transition: max-height 0.3s ease, opacity 0.2s ease;
-        }
-
-        .drawer-content.expanded {
-          max-height: 60vh;
-          opacity: 1;
-          padding: 10px 12px;
-          overflow-y: auto;
-        }
-
-        .drawer-content p {
-          margin-bottom: 0.8rem;
-          font-size: 11px;
-          line-height: 1.5;
-        }
-
-        .drawer-content p:last-child {
-          margin-bottom: 0;
-        }
-
-        /* Slightly larger text on mobile (excluding control pad labels) */
-        body {
-          font-size: 16px;
-        }
-
-        h1 {
-          font-size: 13px;
-        }
-
-        .drawer-content p {
-          font-size: 14px;
-        }
-
-        .info-row {
-          font-size: 14px;
-        }
-
-        .info-label {
-          font-size: 11px;
-        }
-
-        #status {
-          font-size: 12px;
-        }
-
-        #pokemon-info {
-          font-size: 14px;
-        }
-      }
-
-      /* ==========================================
-         Settings Pane
-         ========================================== */
-      #settings-pane {
-        width: 100%;
-        margin-top: 1rem;
-        border-top: 1px solid var(--border);
-        padding-top: 1rem;
-      }
-
-      /* Desktop: Settings toggle hidden, content always visible */
-      #settings-pane .settings-toggle {
-        display: none;
-      }
-
-      #settings-pane .settings-drawer {
-        display: block;
-        max-height: none;
-        opacity: 1;
+        flex: 1;
         padding: 0;
       }
 
-      .settings-title {
-        font-size: 10px;
-        font-weight: normal;
-        color: #555;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        margin: 0 0 1rem 0;
-      }
-
-      .settings-section {
-        margin-bottom: 1rem;
-      }
-
-      .settings-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin-bottom: 6px;
-      }
-
-      .settings-label {
-        display: block;
-        color: #555;
-        text-transform: uppercase;
-        font-size: 10px;
-        letter-spacing: 1px;
-      }
-
-      .reset-btn {
-        background: transparent;
-        border: 1px solid #333;
-        color: #555;
-        font-size: 12px;
-        padding: 2px 6px;
-        cursor: pointer;
-        border-radius: 2px;
-        transition: all 0.15s ease;
-      }
-
-      .reset-btn:hover {
-        background: rgba(255, 255, 255, 0.05);
-        color: #888;
-        border-color: #444;
-      }
-
-      #settings-pane textarea {
-        width: 100%;
-        background: #0a0a0a;
-        border: 1px solid #222;
-        color: #888;
-        font-family: inherit;
-        font-size: 11px;
-        padding: 8px;
-        resize: vertical;
-        min-height: 60px;
-      }
-
-      #settings-pane textarea:focus {
-        outline: none;
-        border-color: #444;
-        color: #aaa;
-      }
-
-      .threshold-controls {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-      }
-
-      .threshold-row {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-      }
-
-      .threshold-label {
-        width: 60px;
-        font-size: 10px;
-        color: #666;
-      }
-
-      .threshold-row input[type="range"] {
-        flex: 1;
-        accent-color: #555;
-        height: 4px;
-      }
-
-      .threshold-val {
-        width: 30px;
-        text-align: right;
-        font-size: 11px;
-        color: #666;
-        font-family: monospace;
-      }
-
-      .preview-section {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-      }
-
-      #threshold-preview {
-        width: 112px;
-        height: 112px;
-        image-rendering: pixelated;
-        border: 1px solid #222;
-        background: #fff;
-      }
-
-      .settings-btn {
-        width: 100%;
-        padding: 10px;
-        background: linear-gradient(145deg, #2a2a2a, #1a1a1a);
-        border: 1px solid #333;
-        color: #888;
-        font-family: inherit;
-        font-size: 11px;
-        letter-spacing: 1px;
-        cursor: pointer;
-        transition: all 0.15s ease;
-      }
-
-      .settings-btn:hover {
-        background: linear-gradient(145deg, #333, #222);
-        border-color: #444;
-        color: #aaa;
-      }
-
-      .settings-btn:active {
-        background: linear-gradient(145deg, #222, #111);
-      }
-
-      /* Mobile: Settings pane as drawer */
-      @media (max-width: 700px) {
-        #settings-pane {
-          position: fixed;
-          bottom: 190px;
-          left: 0.5rem;
-          width: auto;
-          border: none;
-          padding: 0;
-          margin: 0;
-          z-index: 200;
-        }
-
-        #settings-pane .settings-title {
-          display: none;
-        }
-
-        #settings-pane .settings-toggle {
-          display: flex;
-          align-items: center;
-          gap: 0.4em;
-          padding: 4px 8px;
-          background: rgba(20, 20, 20, 0.9);
-          border: 1px solid #333;
-          border-radius: 3px;
-          color: #666;
-          font-family: inherit;
-          font-size: 9px;
-          letter-spacing: 0.5px;
-          cursor: pointer;
-        }
-
-        #settings-pane .settings-toggle:active {
-          background: rgba(30, 30, 30, 0.95);
-        }
-
-        #settings-pane .settings-drawer {
-          position: absolute;
-          bottom: 100%;
-          left: 0;
-          width: 280px;
-          max-width: 85vw;
-          margin-bottom: 4px;
-          background: rgba(10, 10, 10, 0.97);
-          border: 1px solid #333;
-          border-radius: 3px;
-          max-height: 0;
-          overflow: hidden;
-          opacity: 0;
-          transition: max-height 0.3s ease, opacity 0.2s ease;
-        }
-
-        #settings-pane .settings-drawer.expanded {
-          max-height: 70vh;
-          opacity: 1;
-          padding: 10px 12px;
-          overflow-y: auto;
-        }
-
-        #settings-pane textarea {
-          font-size: 12px;
-        }
-      }
-
-      /* ==========================================
-         Mobile Gamepad Controls
-         ========================================== */
-      #mobile-controls {
+      .controls-hint {
         display: none;
       }
 
-      @media (max-width: 700px) {
-        #mobile-controls {
-          display: flex;
-          position: fixed;
-          bottom: 0;
-          left: 0;
-          right: 0;
-          height: 180px;
-          background: linear-gradient(to bottom, #2a2a2a 0%, #1a1a1a 100%);
-          border-top: 2px solid #333;
-          padding: 15px 30px 25px;
-          justify-content: space-between;
-          align-items: flex-start;
-          z-index: 100;
-          touch-action: none;
-          user-select: none;
-        }
-
-        /* D-Pad Container */
-        .dpad-container {
-          position: relative;
-          width: 127px;
-          height: 127px;
-        }
-
-        .dpad-btn {
-          position: absolute;
-          width: 41px;
-          height: 41px;
-          background: linear-gradient(145deg, #3a3a3a, #1a1a1a);
-          border: 1px solid #444;
-          border-radius: 4px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          color: #666;
-          font-size: 16px;
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5),
-            inset 0 1px 0 rgba(255, 255, 255, 0.1);
-          transition: background 0.05s, transform 0.05s;
-        }
-
-        .dpad-btn:active,
-        .dpad-btn.active {
-          background: linear-gradient(145deg, #2a2a2a, #0a0a0a);
-          box-shadow: 0 1px 2px rgba(0, 0, 0, 0.5),
-            inset 0 1px 0 rgba(255, 255, 255, 0.05);
-        }
-
-        /* D-Pad center cross piece */
-        .dpad-center {
-          position: absolute;
-          top: 50%;
-          left: 50%;
-          transform: translate(-50%, -50%);
-          width: 35px;
-          height: 35px;
-          background: #2a2a2a;
-          border-radius: 50%;
-          border: 1px solid #333;
-        }
-
-        .dpad-up {
-          top: 0;
-          left: 50%;
-          transform: translateX(-50%);
-          border-radius: 6px 6px 4px 4px;
-        }
-        .dpad-down {
-          bottom: 0;
-          left: 50%;
-          transform: translateX(-50%);
-          border-radius: 4px 4px 6px 6px;
-        }
-        .dpad-left {
-          left: 0;
-          top: 50%;
-          transform: translateY(-50%);
-          border-radius: 6px 4px 4px 6px;
-        }
-        .dpad-right {
-          right: 0;
-          top: 50%;
-          transform: translateY(-50%);
-          border-radius: 4px 6px 6px 4px;
-        }
-
-        /* Start/Select Container - positioned below, between D-pad and A/B */
-        .meta-container {
-          position: absolute;
-          bottom: 25px;
-          left: 50%;
-          transform: translateX(-50%);
-          display: flex;
-          flex-direction: row;
-          gap: 10px;
-        }
-
-        .meta-btn {
-          width: 55px;
-          height: 16px;
-          background: linear-gradient(145deg, #444, #2a2a2a);
-          border: 1px solid #555;
-          border-radius: 8px;
-          color: #888;
-          font-size: 8px;
-          font-family: sans-serif;
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          box-shadow: 0 2px 3px rgba(0, 0, 0, 0.4),
-            inset 0 1px 0 rgba(255, 255, 255, 0.1);
-          transition: background 0.05s, transform 0.05s;
-          transform: rotate(-15deg);
-        }
-
-        .meta-btn:active,
-        .meta-btn.active {
-          background: linear-gradient(145deg, #333, #1a1a1a);
-          transform: rotate(-15eg) translateY(1px);
-        }
-
-        /* A/B Buttons Container */
-        .ab-container {
-          display: flex;
-          gap: 15px;
-          transform: rotate(-25deg);
-          margin-top: 15px;
-        }
-
-        .ab-btn {
-          width: 60px;
-          height: 60px;
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-family: sans-serif;
-          font-weight: bold;
-          font-size: 18px;
-          border: 2px solid;
-          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5),
-            inset 0 2px 0 rgba(255, 255, 255, 0.2);
-          transition: transform 0.05s, box-shadow 0.05s;
-        }
-
-        .ab-btn:active,
-        .ab-btn.active {
-          transform: translateY(2px);
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5),
-            inset 0 1px 0 rgba(255, 255, 255, 0.1);
-        }
-
-        /* B button - maroon/wine color like original */
-        .btn-b {
-          background: linear-gradient(145deg, #8b3a62, #6b2a4a);
-          border-color: #5a2a3a;
-          color: #ffccdd;
-        }
-        .btn-b:active,
-        .btn-b.active {
-          background: linear-gradient(145deg, #6b2a4a, #4b1a3a);
-        }
-
-        /* A button - also maroon like original GB */
-        .btn-a {
-          background: linear-gradient(145deg, #8b3a62, #6b2a4a);
-          border-color: #5a2a3a;
-          color: #ffccdd;
-        }
-        .btn-a:active,
-        .btn-a.active {
-          background: linear-gradient(145deg, #6b2a4a, #4b1a3a);
-        }
-
-        /* Labels under buttons */
-        .ab-label {
-          position: absolute;
-          bottom: -18px;
-          font-size: 10px;
-          color: #555;
-          font-family: sans-serif;
-          text-transform: uppercase;
-        }
-
-        .ab-btn-wrapper {
-          position: relative;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-        }
+      body {
+        padding: 1rem 1rem 220px 1rem;
       }
-    </style>
-    <script type="importmap">
+
+      h1 {
+        font-size: 12px;
+        margin-bottom: 1rem;
+        letter-spacing: 0.3em;
+      }
+
+      /* Explanation pane - fixed corner toggle */
+      #explanation-pane {
+        position: fixed;
+        bottom: 190px;
+        right: 0.5rem;
+        width: auto;
+        border: none;
+        padding: 0;
+        z-index: 200;
+      }
+
+      .drawer-toggle {
+        display: flex;
+        align-items: center;
+        gap: 0.4em;
+        padding: 4px 8px;
+        background: rgba(20, 20, 20, 0.9);
+        border: 1px solid #333;
+        border-radius: 3px;
+        color: #666;
+        font-family: inherit;
+        font-size: 9px;
+        letter-spacing: 0.5px;
+        cursor: pointer;
+      }
+
+      .drawer-toggle:active {
+        background: rgba(30, 30, 30, 0.95);
+      }
+
+      .drawer-toggle .toggle-icon {
+        font-size: 7px;
+        transition: transform 0.2s ease;
+      }
+
+      .drawer-toggle[aria-expanded="true"] .toggle-icon {
+        transform: rotate(180deg);
+      }
+
+      .drawer-content {
+        position: absolute;
+        bottom: 100%;
+        right: 0;
+        width: 280px;
+        max-width: 85vw;
+        margin-bottom: 4px;
+        background: rgba(10, 10, 10, 0.97);
+        border: 1px solid #333;
+        border-radius: 3px;
+        max-height: 0;
+        overflow: hidden;
+        opacity: 0;
+        transition: max-height 0.3s ease, opacity 0.2s ease;
+      }
+
+      .drawer-content.expanded {
+        max-height: 60vh;
+        opacity: 1;
+        padding: 10px 12px;
+        overflow-y: auto;
+      }
+
+      .drawer-content p {
+        margin-bottom: 0.8rem;
+        font-size: 11px;
+        line-height: 1.5;
+      }
+
+      .drawer-content p:last-child {
+        margin-bottom: 0;
+      }
+
+      /* Slightly larger text on mobile (excluding control pad labels) */
+      body {
+        font-size: 16px;
+      }
+
+      h1 {
+        font-size: 13px;
+      }
+
+      .drawer-content p {
+        font-size: 14px;
+      }
+
+      .info-row {
+        font-size: 14px;
+      }
+
+      .info-label {
+        font-size: 11px;
+      }
+
+      #status {
+        font-size: 12px;
+      }
+
+      #pokemon-info {
+        font-size: 14px;
+      }
+    }
+
+    /* ==========================================
+         Settings Pane
+         ========================================== */
+    #settings-pane {
+      width: 100%;
+      margin-top: 1rem;
+      border-top: 1px solid var(--border);
+      padding-top: 1rem;
+    }
+
+    /* Desktop: Settings toggle hidden, content always visible */
+    #settings-pane .settings-toggle {
+      display: none;
+    }
+
+    #settings-pane .settings-drawer {
+      display: block;
+      max-height: none;
+      opacity: 1;
+      padding: 0;
+    }
+
+    .settings-title {
+      font-size: 10px;
+      font-weight: normal;
+      color: #555;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin: 0 0 1rem 0;
+    }
+
+    .settings-section {
+      margin-bottom: 1rem;
+    }
+
+    .settings-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 6px;
+    }
+
+    .settings-label {
+      display: block;
+      color: #555;
+      text-transform: uppercase;
+      font-size: 10px;
+      letter-spacing: 1px;
+    }
+
+    .reset-btn {
+      background: transparent;
+      border: 1px solid #333;
+      color: #555;
+      font-size: 12px;
+      padding: 2px 6px;
+      cursor: pointer;
+      border-radius: 2px;
+      transition: all 0.15s ease;
+    }
+
+    .reset-btn:hover {
+      background: rgba(255, 255, 255, 0.05);
+      color: #888;
+      border-color: #444;
+    }
+
+    #settings-pane textarea {
+      width: 100%;
+      background: #0a0a0a;
+      border: 1px solid #222;
+      color: #888;
+      font-family: inherit;
+      font-size: 11px;
+      padding: 8px;
+      resize: vertical;
+      min-height: 60px;
+    }
+
+    #settings-pane textarea:focus {
+      outline: none;
+      border-color: #444;
+      color: #aaa;
+    }
+
+    .threshold-controls {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .threshold-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .threshold-label {
+      width: 60px;
+      font-size: 10px;
+      color: #666;
+    }
+
+    .threshold-row input[type="range"] {
+      flex: 1;
+      accent-color: #555;
+      height: 4px;
+    }
+
+    .threshold-val {
+      width: 30px;
+      text-align: right;
+      font-size: 11px;
+      color: #666;
+      font-family: monospace;
+    }
+
+    .preview-section {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    #threshold-preview {
+      width: 112px;
+      height: 112px;
+      image-rendering: pixelated;
+      border: 1px solid #222;
+      background: #fff;
+    }
+
+    .settings-btn {
+      width: 100%;
+      padding: 10px;
+      background: linear-gradient(145deg, #2a2a2a, #1a1a1a);
+      border: 1px solid #333;
+      color: #888;
+      font-family: inherit;
+      font-size: 11px;
+      letter-spacing: 1px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .settings-btn:hover {
+      background: linear-gradient(145deg, #333, #222);
+      border-color: #444;
+      color: #aaa;
+    }
+
+    .settings-btn:active {
+      background: linear-gradient(145deg, #222, #111);
+    }
+
+    /* Mobile: Settings pane as drawer */
+    @media (max-width: 700px) {
+      #settings-pane {
+        position: fixed;
+        bottom: 190px;
+        left: 0.5rem;
+        width: auto;
+        border: none;
+        padding: 0;
+        margin: 0;
+        z-index: 200;
+      }
+
+      #settings-pane .settings-title {
+        display: none;
+      }
+
+      #settings-pane .settings-toggle {
+        display: flex;
+        align-items: center;
+        gap: 0.4em;
+        padding: 4px 8px;
+        background: rgba(20, 20, 20, 0.9);
+        border: 1px solid #333;
+        border-radius: 3px;
+        color: #666;
+        font-family: inherit;
+        font-size: 9px;
+        letter-spacing: 0.5px;
+        cursor: pointer;
+      }
+
+      #settings-pane .settings-toggle:active {
+        background: rgba(30, 30, 30, 0.95);
+      }
+
+      #settings-pane .settings-drawer {
+        position: absolute;
+        bottom: 100%;
+        left: 0;
+        width: 280px;
+        max-width: 85vw;
+        margin-bottom: 4px;
+        background: rgba(10, 10, 10, 0.97);
+        border: 1px solid #333;
+        border-radius: 3px;
+        max-height: 0;
+        overflow: hidden;
+        opacity: 0;
+        transition: max-height 0.3s ease, opacity 0.2s ease;
+      }
+
+      #settings-pane .settings-drawer.expanded {
+        max-height: 70vh;
+        opacity: 1;
+        padding: 10px 12px;
+        overflow-y: auto;
+      }
+
+      #settings-pane textarea {
+        font-size: 12px;
+      }
+    }
+
+    /* ==========================================
+         Mobile Gamepad Controls
+         ========================================== */
+    #mobile-controls {
+      display: none;
+    }
+
+    @media (max-width: 700px) {
+      #mobile-controls {
+        display: flex;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 180px;
+        background: linear-gradient(to bottom, #2a2a2a 0%, #1a1a1a 100%);
+        border-top: 2px solid #333;
+        padding: 15px 30px 25px;
+        justify-content: space-between;
+        align-items: flex-start;
+        z-index: 100;
+        touch-action: none;
+        user-select: none;
+      }
+
+      /* D-Pad Container */
+      .dpad-container {
+        position: relative;
+        width: 127px;
+        height: 127px;
+      }
+
+      .dpad-btn {
+        position: absolute;
+        width: 41px;
+        height: 41px;
+        background: linear-gradient(145deg, #3a3a3a, #1a1a1a);
+        border: 1px solid #444;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #666;
+        font-size: 16px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5),
+          inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        transition: background 0.05s, transform 0.05s;
+      }
+
+      .dpad-btn:active,
+      .dpad-btn.active {
+        background: linear-gradient(145deg, #2a2a2a, #0a0a0a);
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.5),
+          inset 0 1px 0 rgba(255, 255, 255, 0.05);
+      }
+
+      /* D-Pad center cross piece */
+      .dpad-center {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 35px;
+        height: 35px;
+        background: #2a2a2a;
+        border-radius: 50%;
+        border: 1px solid #333;
+      }
+
+      .dpad-up {
+        top: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        border-radius: 6px 6px 4px 4px;
+      }
+
+      .dpad-down {
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        border-radius: 4px 4px 6px 6px;
+      }
+
+      .dpad-left {
+        left: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        border-radius: 6px 4px 4px 6px;
+      }
+
+      .dpad-right {
+        right: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        border-radius: 4px 6px 6px 4px;
+      }
+
+      /* Start/Select Container - positioned below, between D-pad and A/B */
+      .meta-container {
+        position: absolute;
+        bottom: 25px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        flex-direction: row;
+        gap: 10px;
+      }
+
+      .meta-btn {
+        width: 55px;
+        height: 16px;
+        background: linear-gradient(145deg, #444, #2a2a2a);
+        border: 1px solid #555;
+        border-radius: 8px;
+        color: #888;
+        font-size: 8px;
+        font-family: sans-serif;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 3px rgba(0, 0, 0, 0.4),
+          inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        transition: background 0.05s, transform 0.05s;
+        transform: rotate(-15deg);
+      }
+
+      .meta-btn:active,
+      .meta-btn.active {
+        background: linear-gradient(145deg, #333, #1a1a1a);
+        transform: rotate(-15eg) translateY(1px);
+      }
+
+      /* A/B Buttons Container */
+      .ab-container {
+        display: flex;
+        gap: 15px;
+        transform: rotate(-25deg);
+        margin-top: 15px;
+      }
+
+      .ab-btn {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: sans-serif;
+        font-weight: bold;
+        font-size: 18px;
+        border: 2px solid;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5),
+          inset 0 2px 0 rgba(255, 255, 255, 0.2);
+        transition: transform 0.05s, box-shadow 0.05s;
+      }
+
+      .ab-btn:active,
+      .ab-btn.active {
+        transform: translateY(2px);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5),
+          inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      }
+
+      /* B button - maroon/wine color like original */
+      .btn-b {
+        background: linear-gradient(145deg, #8b3a62, #6b2a4a);
+        border-color: #5a2a3a;
+        color: #ffccdd;
+      }
+
+      .btn-b:active,
+      .btn-b.active {
+        background: linear-gradient(145deg, #6b2a4a, #4b1a3a);
+      }
+
+      /* A button - also maroon like original GB */
+      .btn-a {
+        background: linear-gradient(145deg, #8b3a62, #6b2a4a);
+        border-color: #5a2a3a;
+        color: #ffccdd;
+      }
+
+      .btn-a:active,
+      .btn-a.active {
+        background: linear-gradient(145deg, #6b2a4a, #4b1a3a);
+      }
+
+      /* Labels under buttons */
+      .ab-label {
+        position: absolute;
+        bottom: -18px;
+        font-size: 10px;
+        color: #555;
+        font-family: sans-serif;
+        text-transform: uppercase;
+      }
+
+      .ab-btn-wrapper {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+    }
+  </style>
+  <script type="importmap">
       {
         "imports": {
           "@google/genai": "https://esm.sh/@google/genai@^1.34.0"
         }
       }
     </script>
-    <script>
-      // Global emulator stub required by binjgb when compiled with RGBDS_LIVE
-      // This must be defined before the WASM module loads
-      // Using var (not let/const) to ensure it's truly global
-      var emulator = {
-        serialCallback: function(value) {
-          // No-op - we don't use serial debugging
-        }
-      };
-    </script>
-  </head>
-  <body>
-    <h1>pokemon_feverdream</h1>
+  <script>
+    // Global emulator stub required by binjgb when compiled with RGBDS_LIVE
+    // This must be defined before the WASM module loads
+    // Using var (not let/const) to ensure it's truly global
+    var emulator = {
+      serialCallback: function (value) {
+        // No-op - we don't use serial debugging
+      }
+    };
+  </script>
+</head>
 
-    <div class="main-container">
-      <!-- Explanation Pane -->
-      <div id="explanation-pane" class="pane">
-        <button class="drawer-toggle" aria-expanded="false" aria-controls="explanation-content">
-          <span>What is this?</span>
-          <span class="toggle-icon">▲</span>
-        </button>
-        <div id="explanation-content" class="drawer-content">
-          <p>
-            <strong>What is this?</strong> Battle infinite Pokémon and never
-            know peace.
-          </p>
-          <p>
-            This app generates Pokémon front sprites and names with Gemini models,
-            then injects them into the running game's memory, so you can battle
-            them.
-          </p>
-          <p>
-            <strong>Instructions:</strong> Wait for generation. Click game to
-            focus input. ENTER at title, X to select.
-          </p>
-          <p>
-            <strong>Known issues:</strong> If Gemini fails, you get "FLAMORB".
-            If you see "FLAMORB", refresh and try again. Sorry. I am trying to get
-            rid of him.
-          </p>
-          <p>
-            <strong>How does it work?</strong> We use
-            <a href="https://github.com/nickshanks/binjgb" style="color: #888;">binjgb</a>,
-            a Game Boy emulator that lets us read and write the emulated console's
-            memory while the game runs.
-          </p>
-          <p>
-            To know <em>where</em> to write, we rely on
-            <a href="https://github.com/pret/pokered" style="color: #888;">pokered</a>,
-            a disassembly of Pokémon Red. A disassembly is source code
-            reconstructed from a compiled binary. It shows the exact memory
-            addresses for things like Pokémon names and sprite data, and how
-            the game expects them to be formatted. We also use it to build a
-            modified ROM that boots straight into battle mode.
-          </p>
-          <p>
-            The trick is <em>timing</em>. We attach code to the emulator to set a
-            <a href="https://en.wikipedia.org/wiki/Breakpoint" style="color: #888;">breakpoint</a>.
-            When we see the game about to execute CPU instructions from the
-            address we know is the start of the "load front sprite" code, we
-            write our AI-generated sprite (converted to the Game Boy's tile 
-            format) and name to the place where the game expects it, then 
-            "skip over" the game's sprite loading code.
-          </p>
-          <p>
-            <strong>Areas for improvement:</strong> 
-            <ul>
-              <li>generate entire movesets</li>
-              <li>and <a href="https://ardean.github.io/pokemon-gen1-cry-synthesizer/" style="color: #888;">cries</a></li>
-              <li>other dumb stuff also</li>
-            </ul>
-          </p>
+<body>
+  <h1>pokemon_feverdream</h1>
+
+  <div class="main-container">
+    <!-- Explanation Pane -->
+    <div id="explanation-pane" class="pane">
+      <button class="drawer-toggle" aria-expanded="false" aria-controls="explanation-content">
+        <span>What is this?</span>
+        <span class="toggle-icon">▲</span>
+      </button>
+      <div id="explanation-content" class="drawer-content">
+        <p>
+          <strong>What is this?</strong> Battle infinite Pokémon and never
+          know peace.
+        </p>
+        <p>
+          This app generates Pokémon front sprites and names with Gemini models,
+          then injects them into the running game's memory, so you can battle
+          them.
+        </p>
+        <p>
+          <strong>Instructions:</strong> Wait for generation. Click game to
+          focus input. ENTER at title, X to select.
+        </p>
+        <p>
+          <strong>Known issues:</strong> If Gemini fails, you get "FLAMORB".
+          If you see "FLAMORB", refresh and try again. Sorry. I am trying to get
+          rid of him.
+        </p>
+        <p>
+          <strong>How does it work?</strong> We use
+          <a href="https://github.com/nickshanks/binjgb" style="color: #888;">binjgb</a>,
+          an emulator that lets us read and write Game Boy memory at runtime.
+        </p>
+        <p>
+          To know <em>where</em> to write, we use
+          <a href="https://github.com/pret/pokered" style="color: #888;">pokered</a>,
+          a disassembly of Pokémon Red—source code reconstructed from the
+          binary. It reveals exact memory addresses for sprite data and names,
+          plus lets us build a modified ROM that boots straight into battle.
+        </p>
+        <p>
+          The trick is <em>timing</em>. We set a
+          <a href="https://en.wikipedia.org/wiki/Breakpoint" style="color: #888;">breakpoint</a>
+          on the "load front sprite" function. When the game is about to
+          execute it, we inject our AI-generated sprite and name, then skip
+          the game's own loading code.
+        </p>
+        <p>
+          <strong>Areas for improvement:</strong>
+        <ul>
+          <li>generate entire movesets</li>
+          <li>and <a href="https://ardean.github.io/pokemon-gen1-cry-synthesizer/" style="color: #888;">cries</a></li>
+          <li>other dumb stuff also</li>
+        </ul>
+        </p>
+      </div>
+    </div>
+
+    <!-- Game Pane -->
+    <div id="game-wrapper">
+      <div id="game-container">
+        <canvas id="screen" width="640" height="576"></canvas>
+        <div id="generation-overlay">
+          <div class="dreaming-text">dreaming...</div>
         </div>
       </div>
+      <div class="controls-hint">
+        click emulator to focus | Z/X: B/A | enter: start
+      </div>
+      <div id="status">initializing...</div>
+    </div>
 
-      <!-- Game Pane -->
-      <div id="game-wrapper">
-        <div id="game-container">
-          <canvas id="screen" width="640" height="576"></canvas>
-          <div id="generation-overlay">
-            <div class="dreaming-text">dreaming...</div>
-          </div>
-        </div>
-        <div class="controls-hint">
-          click emulator to focus | Z/X: B/A | enter: start
-        </div>
-        <div id="status">initializing...</div>
+    <!-- Mobile Controls (visible only on mobile) -->
+    <div id="mobile-controls">
+      <!-- D-Pad -->
+      <div class="dpad-container">
+        <div class="dpad-center"></div>
+        <button class="dpad-btn dpad-up" data-button="up">▲</button>
+        <button class="dpad-btn dpad-down" data-button="down">▼</button>
+        <button class="dpad-btn dpad-left" data-button="left">◀</button>
+        <button class="dpad-btn dpad-right" data-button="right">▶</button>
       </div>
 
-      <!-- Mobile Controls (visible only on mobile) -->
-      <div id="mobile-controls">
-        <!-- D-Pad -->
-        <div class="dpad-container">
-          <div class="dpad-center"></div>
-          <button class="dpad-btn dpad-up" data-button="up">▲</button>
-          <button class="dpad-btn dpad-down" data-button="down">▼</button>
-          <button class="dpad-btn dpad-left" data-button="left">◀</button>
-          <button class="dpad-btn dpad-right" data-button="right">▶</button>
-        </div>
-
-        <!-- Start/Select -->
-        <div class="meta-container">
-          <button class="meta-btn" data-button="select">Select</button>
-          <button class="meta-btn" data-button="start">Start</button>
-        </div>
-
-        <!-- B/A Buttons -->
-        <div class="ab-container">
-          <div class="ab-btn-wrapper">
-            <button class="ab-btn btn-b" data-button="b">B</button>
-          </div>
-          <div class="ab-btn-wrapper">
-            <button class="ab-btn btn-a" data-button="a">A</button>
-          </div>
-        </div>
+      <!-- Start/Select -->
+      <div class="meta-container">
+        <button class="meta-btn" data-button="select">Select</button>
+        <button class="meta-btn" data-button="start">Start</button>
       </div>
 
-      <!-- Info Pane -->
-      <div id="info-panel" class="pane">
-        <div class="image-preview">
-          <img id="raw-image" alt="generated_sprite" />
+      <!-- B/A Buttons -->
+      <div class="ab-container">
+        <div class="ab-btn-wrapper">
+          <button class="ab-btn btn-b" data-button="b">B</button>
         </div>
-        <div id="pokemon-info">
-          <div
-            style="
+        <div class="ab-btn-wrapper">
+          <button class="ab-btn btn-a" data-button="a">A</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Info Pane -->
+    <div id="info-panel" class="pane">
+      <div class="image-preview">
+        <img id="raw-image" alt="generated_sprite" />
+      </div>
+      <div id="pokemon-info">
+        <div style="
               text-align: center;
               font-style: italic;
               color: #333;
               margin-top: 2rem;
-            "
-          >
-            waiting for signal...
-          </div>
+            ">
+          waiting for signal...
         </div>
+      </div>
 
-        <!-- Settings Pane -->
-        <div id="settings-pane">
-          <h3 class="settings-title">Advanced Settings</h3>
-          <button class="drawer-toggle settings-toggle" aria-expanded="false" aria-controls="settings-content">
-            <span>⚙ Advanced Settings</span>
-            <span class="toggle-icon">▲</span>
-          </button>
-          <div id="settings-content" class="drawer-content settings-drawer">
-            <div class="settings-section">
-              <div class="settings-header">
-                <label class="settings-label">Name Prompt Template</label>
-                <button class="reset-btn" id="reset-name-prompt" title="Reset to default">↺</button>
-              </div>
-              <textarea id="name-prompt" rows="5" placeholder="Use {type} for Pokemon type"></textarea>
+      <!-- Settings Pane -->
+      <div id="settings-pane">
+        <h3 class="settings-title">Advanced Settings</h3>
+        <button class="drawer-toggle settings-toggle" aria-expanded="false" aria-controls="settings-content">
+          <span>⚙ Advanced Settings</span>
+          <span class="toggle-icon">▲</span>
+        </button>
+        <div id="settings-content" class="drawer-content settings-drawer">
+          <div class="settings-section">
+            <div class="settings-header">
+              <label class="settings-label">Name Prompt Template</label>
+              <button class="reset-btn" id="reset-name-prompt" title="Reset to default">↺</button>
             </div>
-            <div class="settings-section">
-              <div class="settings-header">
-                <label class="settings-label">Image Prompt Template</label>
-                <button class="reset-btn" id="reset-image-prompt" title="Reset to default">↺</button>
-              </div>
-              <textarea id="image-prompt" rows="3" placeholder="Use {type} and {name} for substitution"></textarea>
-            </div>
-            <div class="settings-section">
-              <label class="settings-label">2bpp Thresholds</label>
-              <div class="threshold-controls">
-                <div class="threshold-row">
-                  <span class="threshold-label">Black (&lt;)</span>
-                  <input type="range" id="threshold-black" min="0" max="255" value="96" />
-                  <span id="threshold-black-val" class="threshold-val">96</span>
-                </div>
-                <div class="threshold-row">
-                  <span class="threshold-label">Dark (&lt;)</span>
-                  <input type="range" id="threshold-dark" min="0" max="255" value="150" />
-                  <span id="threshold-dark-val" class="threshold-val">150</span>
-                </div>
-                <div class="threshold-row">
-                  <span class="threshold-label">Light (&lt;)</span>
-                  <input type="range" id="threshold-light" min="0" max="255" value="224" />
-                  <span id="threshold-light-val" class="threshold-val">224</span>
-                </div>
-              </div>
-            </div>
-            <div class="settings-section preview-section">
-              <label class="settings-label">2bpp Preview</label>
-              <canvas id="threshold-preview" width="56" height="56"></canvas>
-            </div>
-            <button id="regenerate-btn" class="settings-btn">🔄 Regenerate Now</button>
+            <textarea id="name-prompt" rows="5" placeholder="Use {type} for Pokemon type"></textarea>
           </div>
+          <div class="settings-section">
+            <div class="settings-header">
+              <label class="settings-label">Image Prompt Template</label>
+              <button class="reset-btn" id="reset-image-prompt" title="Reset to default">↺</button>
+            </div>
+            <textarea id="image-prompt" rows="3" placeholder="Use {type} and {name} for substitution"></textarea>
+          </div>
+          <div class="settings-section">
+            <label class="settings-label">2bpp Thresholds</label>
+            <div class="threshold-controls">
+              <div class="threshold-row">
+                <span class="threshold-label">Black (&lt;)</span>
+                <input type="range" id="threshold-black" min="0" max="255" value="96" />
+                <span id="threshold-black-val" class="threshold-val">96</span>
+              </div>
+              <div class="threshold-row">
+                <span class="threshold-label">Dark (&lt;)</span>
+                <input type="range" id="threshold-dark" min="0" max="255" value="150" />
+                <span id="threshold-dark-val" class="threshold-val">150</span>
+              </div>
+              <div class="threshold-row">
+                <span class="threshold-label">Light (&lt;)</span>
+                <input type="range" id="threshold-light" min="0" max="255" value="224" />
+                <span id="threshold-light-val" class="threshold-val">224</span>
+              </div>
+            </div>
+          </div>
+          <div class="settings-section preview-section">
+            <label class="settings-label">2bpp Preview</label>
+            <canvas id="threshold-preview" width="56" height="56"></canvas>
+          </div>
+          <button id="regenerate-btn" class="settings-btn">🔄 Regenerate Now</button>
         </div>
       </div>
     </div>
-    <script>
-      // Drawer toggle functionality for mobile
-      document.addEventListener('DOMContentLoaded', () => {
-        // Handle all drawer toggles
-        const toggles = document.querySelectorAll('.drawer-toggle');
-        
-        toggles.forEach(toggle => {
-          const contentId = toggle.getAttribute('aria-controls');
-          const content = document.getElementById(contentId);
-          
-          if (content) {
-            toggle.addEventListener('click', () => {
-              const isExpanded = toggle.getAttribute('aria-expanded') === 'true';
-              toggle.setAttribute('aria-expanded', !isExpanded);
-              content.classList.toggle('expanded', !isExpanded);
-            });
-          }
-        });
+  </div>
+  <script>
+    // Drawer toggle functionality for mobile
+    document.addEventListener('DOMContentLoaded', () => {
+      // Handle all drawer toggles
+      const toggles = document.querySelectorAll('.drawer-toggle');
+
+      toggles.forEach(toggle => {
+        const contentId = toggle.getAttribute('aria-controls');
+        const content = document.getElementById(contentId);
+
+        if (content) {
+          toggle.addEventListener('click', () => {
+            const isExpanded = toggle.getAttribute('aria-expanded') === 'true';
+            toggle.setAttribute('aria-expanded', !isExpanded);
+            content.classList.toggle('expanded', !isExpanded);
+          });
+        }
       });
-    </script>
-    <script type="module" src="./index.tsx"></script>
-  </body>
+    });
+  </script>
+  <script type="module" src="./index.tsx"></script>
+</body>
+
 </html>
