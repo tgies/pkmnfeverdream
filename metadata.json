@@ -1,5 +1,5 @@
 {
-  "name": "Pokemon Feverdream",
+  "name": "pokemon_feverdream v2.0",
   "description": "Infinite Pokemon battles with AI-generated Pokemon names and sprites using Gemini, running in a Game Boy emulator.",
   "requestFramePermissions": []
 }
