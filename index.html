@@ -65,10 +65,41 @@
       font-size: 14px;
       font-weight: normal;
       letter-spacing: 0.5em;
-      margin-bottom: 4rem;
+      margin-bottom: 0.5rem;
       color: #fff;
       text-transform: lowercase;
       opacity: 0.8;
+    }
+
+    .feature-badge {
+      font-size: 10px;
+      color: #555;
+      letter-spacing: 0.1em;
+      margin-bottom: 1rem;
+      font-style: italic;
+    }
+
+    .feature-badge::before {
+      content: '✦ ';
+      color: #886622;
+    }
+
+    .footer-credit {
+      margin-top: 4rem;
+      padding: 1rem;
+      font-size: 11px;
+      color: #444;
+      text-align: center;
+    }
+
+    .footer-credit a {
+      color: #666;
+      text-decoration: none;
+      transition: color 0.15s ease;
+    }
+
+    .footer-credit a:hover {
+      color: #888;
     }
 
     .main-container {
@@ -695,6 +726,12 @@
       #pokemon-info {
         font-size: 14px;
       }
+
+      #camera-prompt-section {
+        border-top: none;
+        padding-top: 0;
+        margin-top: 0;
+      }
     }
 
     /* ==========================================
@@ -1143,6 +1180,7 @@
 
 <body>
   <h1>pokemon_feverdream v2.1</h1>
+  <div class="feature-badge">now with game boy camera! ↘</div>
 
   <div class="main-container">
     <!-- Explanation Pane -->
@@ -1326,7 +1364,7 @@
       <!-- Camera Prompt Section (visible when camera source active) -->
       <div id="camera-prompt-section">
         <div class="settings-header">
-          <label class="settings-label">📷 Camera Transformation Prompt</label>
+          <label class="settings-label">📷 Camera</label>
           <button class="reset-btn" id="reset-camera-prompt" title="Reset to default">↺</button>
         </div>
         <textarea id="camera-prompt" rows="4"
@@ -1335,6 +1373,10 @@
       </div>
     </div>
   </div>
+
+  <footer class="footer-credit">
+    finagled by <a href="https://x.com/me_irl" target="_blank" rel="noopener">@me_irl</a>
+  </footer>
   <script>
     // Drawer toggle functionality for mobile
     document.addEventListener('DOMContentLoaded', () => {
