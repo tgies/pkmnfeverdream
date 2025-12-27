@@ -16,6 +16,7 @@ export interface ConfigState {
   cameraPromptTemplate: string;
   thresholds: ThresholdConfig;
   nameTemperature: number;
+  darknessExponent: number;
 }
 
 export type ConfigChangeListener = (config: ConfigState) => void;
@@ -41,6 +42,7 @@ const DEFAULT_THRESHOLDS: ThresholdConfig = {
 };
 
 const DEFAULT_NAME_TEMPERATURE = 1.5;
+const DEFAULT_DARKNESS_EXPONENT = 0.6;
 
 /**
  * Singleton configuration service
@@ -56,6 +58,7 @@ class ConfigServiceClass {
       cameraPromptTemplate: DEFAULT_CAMERA_PROMPT,
       thresholds: { ...DEFAULT_THRESHOLDS },
       nameTemperature: DEFAULT_NAME_TEMPERATURE,
+      darknessExponent: DEFAULT_DARKNESS_EXPONENT,
     };
   }
 
@@ -111,6 +114,28 @@ class ConfigServiceClass {
   setNameTemperature(temperature: number): void {
     this.state.nameTemperature = temperature;
     this.notifyListeners();
+  }
+
+  /**
+   * Get darkness exponent for resampling
+   */
+  getDarknessExponent(): number {
+    return this.state.darknessExponent;
+  }
+
+  /**
+   * Set darkness exponent for resampling
+   */
+  setDarknessExponent(exponent: number): void {
+    this.state.darknessExponent = exponent;
+    this.notifyListeners();
+  }
+
+  /**
+   * Get default darkness exponent
+   */
+  getDefaultDarknessExponent(): number {
+    return DEFAULT_DARKNESS_EXPONENT;
   }
 
   /**
@@ -210,6 +235,7 @@ class ConfigServiceClass {
       cameraPromptTemplate: DEFAULT_CAMERA_PROMPT,
       thresholds: { ...DEFAULT_THRESHOLDS },
       nameTemperature: DEFAULT_NAME_TEMPERATURE,
+      darknessExponent: DEFAULT_DARKNESS_EXPONENT,
     };
     this.notifyListeners();
   }

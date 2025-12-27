@@ -43,6 +43,8 @@ const resetImagePromptEl = document.getElementById('reset-image-prompt') as HTML
 const nameTemperatureEl = document.getElementById('name-temperature') as HTMLInputElement;
 const nameTemperatureValEl = document.getElementById('name-temperature-val')!;
 const resetNameTempEl = document.getElementById('reset-name-temp') as HTMLButtonElement;
+const darknessExponentEl = document.getElementById('darkness-exponent') as HTMLInputElement;
+const darknessExponentValEl = document.getElementById('darkness-exponent-val')!;
 
 // Camera Mode DOM elements
 const gameContainerEl = document.getElementById('game-container')!;
@@ -341,6 +343,8 @@ function setupSettings(): void {
   thresholdLightValEl.textContent = String(config.thresholds.lightGray);
   nameTemperatureEl.value = String(config.nameTemperature);
   nameTemperatureValEl.textContent = config.nameTemperature.toFixed(1);
+  darknessExponentEl.value = String(config.darknessExponent);
+  darknessExponentValEl.textContent = config.darknessExponent.toFixed(1);
 
   // Prompt template changes (save on blur to avoid constant updates while typing)
   namePromptEl.addEventListener('blur', () => {
@@ -401,6 +405,14 @@ function setupSettings(): void {
     const value = parseInt(thresholdLightEl.value, 10);
     thresholdLightValEl.textContent = String(value);
     ConfigService.setThresholds({ lightGray: value });
+    updateThresholdPreview();
+  });
+
+  // Darkness exponent slider
+  darknessExponentEl.addEventListener('input', () => {
+    const value = parseFloat(darknessExponentEl.value);
+    darknessExponentValEl.textContent = value.toFixed(1);
+    ConfigService.setDarknessExponent(value);
     updateThresholdPreview();
   });
 
