@@ -110,7 +110,7 @@
       gap: 3rem;
       flex-wrap: wrap;
       width: 100%;
-      max-width: 1600px;
+      max-width: 1536px;
     }
 
     .pane {
@@ -471,6 +471,7 @@
     .image-preview {
       width: 224px;
       height: 224px;
+      aspect-ratio: 1;
       border: 1px solid #111;
       display: flex;
       align-items: center;
@@ -483,12 +484,13 @@
       width: 100%;
       height: 100%;
       image-rendering: pixelated;
-      display: none;
-      opacity: 0.9;
+      object-fit: contain;
+      opacity: 0;
+      transition: opacity 0.2s ease;
     }
 
     #raw-image.loaded {
-      display: block;
+      opacity: 0.9;
     }
 
     #pokemon-info {
@@ -551,31 +553,33 @@
       }
     }
 
-    /* Mobile layout adjustments */
-    @media (max-width: 1300px) {
+    /* Intermediate layout (tablet/narrow desktop) */
+    @media (max-width: 1536px) {
       .main-container {
-        flex-direction: column;
-        align-items: center;
-        gap: 4rem;
-      }
-
-      .pane {
-        width: 640px;
+        display: grid;
+        grid-template-columns: auto 360px;
+        grid-template-rows: auto auto;
+        gap: 3rem;
+        justify-content: center;
         max-width: 100%;
       }
 
       #game-wrapper {
-        order: -1;
+        grid-column: 1;
+        grid-row: 1;
       }
 
-      #info-panel {
-        flex-direction: row;
-        justify-content: space-between;
-        align-items: flex-start;
+      .pane:not(#explanation-pane) {
+        grid-column: 2;
+        grid-row: 1;
+        width: 360px;
       }
 
-      .image-preview {
-        margin-top: 0;
+      #explanation-pane {
+        grid-column: 1 / -1;
+        grid-row: 2;
+        width: 100%;
+        max-width: calc(640px + 3rem + 360px);
       }
     }
 

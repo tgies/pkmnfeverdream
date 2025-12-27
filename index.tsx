@@ -442,6 +442,11 @@ async function enterCameraMode(): Promise<void> {
     cameraModeBtn.classList.add('active');
     capturedPhotoDataUrl = null;
     gameContainerEl.classList.remove('photo-captured');
+    
+    // Mirror preview if using front camera
+    const isFrontCamera = cameraService.getFacingMode() === 'user';
+    cameraPreviewEl.classList.toggle('mirrored', isFrontCamera);
+    
     updateStatus('📷 Camera mode - Take a photo!');
   } catch (error) {
     console.error('Failed to start camera:', error);
@@ -570,6 +575,10 @@ function setupCameraMode(): void {
     try {
       await cameraService.flipCamera();
       const mode = cameraService.getFacingMode();
+      
+      // Mirror preview if using front camera
+      cameraPreviewEl.classList.toggle('mirrored', mode === 'user');
+      
       updateStatus(`📷 Switched to ${mode === 'user' ? 'front' : 'back'} camera`);
     } catch (error) {
       console.error('Failed to flip camera:', error);
