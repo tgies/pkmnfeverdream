@@ -83,7 +83,7 @@
     }
 
     .pane {
-      width: 340px;
+      width: 360px;
       padding-top: 10px;
     }
 
@@ -880,7 +880,7 @@
       </button>
       <div id="explanation-content" class="drawer-content">
         <p>
-          <strong>What is this?</strong> Battle infinite Pokémon and never
+          <strong>What is this?</strong> Battle infinite Pokémon, never
           know peace.
         </p>
         <p>
@@ -894,7 +894,7 @@
         </p>
         <p>
           <strong>Known issues:</strong> If Gemini fails, you get "FLAMORB".
-          If you see "FLAMORB", refresh and try again. Sorry. I am trying to get
+          If you see "FLAMORB", refresh, try again. Sorry. I am trying to get
           rid of him.
         </p>
         <p>
@@ -903,27 +903,27 @@
           an emulator that lets us read and write Game Boy memory at runtime.
         </p>
         <p>
-          To know <em>where</em> to write, we use
+          We rely on
           <a href="https://github.com/pret/pokered" style="color: #888;">pokered</a>,
-          a disassembly of Pokémon Red—source code reconstructed from the
-          binary. It reveals exact memory addresses for sprite data and names,
-          plus lets us build a modified ROM that boots straight into battle.
+          a reconstruction of Pokémon Red source code. It reveals memory
+          addresses for sprite data and names, plus helps us build a modified ROM
+          that boots straight to battle.
         </p>
         <p>
-          The trick is <em>timing</em>. We set a
+          We set a
           <a href="https://en.wikipedia.org/wiki/Breakpoint" style="color: #888;">breakpoint</a>
           on the "load front sprite" function. When the game is about to
-          execute it, we inject our AI-generated sprite and name, then skip
-          the game's own loading code.
+          execute it, we inject our sprite (converted to Game Boy format) and
+          name, then skip the game's loading code.
         </p>
-        <p>
+        <!--<p>
           <strong>Areas for improvement:</strong>
         <ul>
           <li>generate entire movesets</li>
           <li>and <a href="https://ardean.github.io/pokemon-gen1-cry-synthesizer/" style="color: #888;">cries</a></li>
           <li>other dumb stuff also</li>
         </ul>
-        </p>
+        </p>-->
       </div>
     </div>
 
