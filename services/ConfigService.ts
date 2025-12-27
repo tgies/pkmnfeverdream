@@ -35,8 +35,8 @@ The sprite should be 56x56 pixels, low detail, white background, no text.
 Capture the essence and mood of the subject as a {type}-type Pokemon named {name}.`;
 
 const DEFAULT_THRESHOLDS: ThresholdConfig = {
-  black: 96,
-  darkGray: 150,
+  black: 64,
+  darkGray: 128,
   lightGray: 224,
 };
 
