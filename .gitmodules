@@ -1,0 +1,7 @@
+[submodule "vendor/binjgb"]
+	path = vendor/binjgb
+	url = https://github.com/binji/binjgb.git
+[submodule "vendor/pokered"]
+	path = vendor/pokered
+	url = https://github.com/tgies/pokered.git
+	branch = pkmnfeverdream
