@@ -11,11 +11,11 @@
         --dim: #555;
         --border: #222;
       }
-      
+
       * {
         box-sizing: border-box;
       }
-      
+
       body {
         margin: 0;
         padding: 4rem 2rem;
@@ -39,7 +39,7 @@
         text-transform: lowercase;
         opacity: 0.8;
       }
-      
+
       .main-container {
         display: flex;
         flex-direction: row;
@@ -55,7 +55,7 @@
         width: 300px;
         padding-top: 10px;
       }
-      
+
       /* Left Pane: Explanation */
       #explanation-pane {
         border-top: 1px solid var(--border);
@@ -63,11 +63,11 @@
         font-size: 12px;
         text-align: justify;
       }
-      
+
       #explanation-pane p {
         margin-bottom: 1.5rem;
       }
-      
+
       strong {
         color: #aaa;
         font-weight: normal;
@@ -106,7 +106,7 @@
         font-family: monospace;
         letter-spacing: 1px;
       }
-      
+
       #status {
         font-size: 11px;
         color: #444;
@@ -142,16 +142,16 @@
         display: none;
         opacity: 0.9;
       }
-      
+
       #raw-image.loaded {
         display: block;
       }
-      
+
       #pokemon-info {
         width: 100%;
         padding: 0 1rem;
       }
-      
+
       .info-row {
         display: flex;
         justify-content: space-between;
@@ -160,7 +160,7 @@
         margin-bottom: 10px;
         font-size: 12px;
       }
-      
+
       .info-label {
         color: #555;
         text-transform: uppercase;
@@ -171,30 +171,38 @@
       /* Overlay */
       #generation-overlay {
         position: absolute;
-        top: 0; left: 0; right: 0; bottom: 0;
-        background: rgba(0,0,0,0.95);
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.95);
         display: flex;
         align-items: center;
         justify-content: center;
         z-index: 10;
         transition: opacity 0.5s ease;
       }
-      
+
       #generation-overlay.hidden {
         opacity: 0;
         pointer-events: none;
       }
-      
+
       .dreaming-text {
         color: #333;
         font-size: 12px;
         letter-spacing: 4px;
         animation: breathe 3s infinite ease-in-out;
       }
-      
+
       @keyframes breathe {
-        0%, 100% { color: #333; }
-        50% { color: #666; }
+        0%,
+        100% {
+          color: #333;
+        }
+        50% {
+          color: #666;
+        }
       }
 
       /* Mobile layout adjustments */
@@ -204,7 +212,7 @@
           align-items: center;
           gap: 4rem;
         }
-        
+
         .pane {
           width: 640px;
           max-width: 100%;
@@ -212,54 +220,287 @@
           border-left: 2px solid var(--border);
           padding-left: 20px;
         }
-        
+
         #game-wrapper {
-            order: -1;
+          order: -1;
         }
-        
+
         #info-panel {
-            flex-direction: row;
-            justify-content: space-between;
-            align-items: flex-start;
+          flex-direction: row;
+          justify-content: space-between;
+          align-items: flex-start;
         }
         .image-preview {
-            margin-top: 0;
+          margin-top: 0;
         }
       }
 
       @media (max-width: 700px) {
         canvas#screen {
-            width: 100%;
-            height: auto;
+          width: 100%;
+          height: auto;
         }
-        .pane, #game-wrapper {
-            width: 100%;
+        .pane,
+        #game-wrapper {
+          width: 100%;
         }
         #info-panel {
-            flex-direction: column;
-            align-items: center;
+          flex-direction: column;
+          align-items: center;
+        }
+        .controls-hint {
+          display: none;
+        }
+        body {
+          padding: 1rem 1rem 220px 1rem;
+        }
+        h1 {
+          font-size: 12px;
+          margin-bottom: 1rem;
+          letter-spacing: 0.3em;
+        }
+      }
+
+      /* ==========================================
+         Mobile Gamepad Controls
+         ========================================== */
+      #mobile-controls {
+        display: none;
+      }
+
+      @media (max-width: 700px) {
+        #mobile-controls {
+          display: flex;
+          position: fixed;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          height: 180px;
+          background: linear-gradient(to bottom, #2a2a2a 0%, #1a1a1a 100%);
+          border-top: 2px solid #333;
+          padding: 15px 30px 25px;
+          justify-content: space-between;
+          align-items: flex-start;
+          z-index: 100;
+          touch-action: none;
+          user-select: none;
+        }
+
+        /* D-Pad Container */
+        .dpad-container {
+          position: relative;
+          width: 127px;
+          height: 127px;
+        }
+
+        .dpad-btn {
+          position: absolute;
+          width: 41px;
+          height: 41px;
+          background: linear-gradient(145deg, #3a3a3a, #1a1a1a);
+          border: 1px solid #444;
+          border-radius: 4px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: #666;
+          font-size: 16px;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5),
+            inset 0 1px 0 rgba(255, 255, 255, 0.1);
+          transition: background 0.05s, transform 0.05s;
+        }
+
+        .dpad-btn:active,
+        .dpad-btn.active {
+          background: linear-gradient(145deg, #2a2a2a, #0a0a0a);
+          box-shadow: 0 1px 2px rgba(0, 0, 0, 0.5),
+            inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        }
+
+        /* D-Pad center cross piece */
+        .dpad-center {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          width: 35px;
+          height: 35px;
+          background: #2a2a2a;
+          border-radius: 50%;
+          border: 1px solid #333;
+        }
+
+        .dpad-up {
+          top: 0;
+          left: 50%;
+          transform: translateX(-50%);
+          border-radius: 6px 6px 4px 4px;
+        }
+        .dpad-down {
+          bottom: 0;
+          left: 50%;
+          transform: translateX(-50%);
+          border-radius: 4px 4px 6px 6px;
+        }
+        .dpad-left {
+          left: 0;
+          top: 50%;
+          transform: translateY(-50%);
+          border-radius: 6px 4px 4px 6px;
+        }
+        .dpad-right {
+          right: 0;
+          top: 50%;
+          transform: translateY(-50%);
+          border-radius: 4px 6px 6px 4px;
+        }
+
+        /* Start/Select Container - positioned below, between D-pad and A/B */
+        .meta-container {
+          position: absolute;
+          bottom: 25px;
+          left: 50%;
+          transform: translateX(-50%);
+          display: flex;
+          flex-direction: row;
+          gap: 16px;
+        }
+
+        .meta-btn {
+          width: 55px;
+          height: 16px;
+          background: linear-gradient(145deg, #444, #2a2a2a);
+          border: 1px solid #555;
+          border-radius: 8px;
+          color: #888;
+          font-size: 8px;
+          font-family: sans-serif;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          box-shadow: 0 2px 3px rgba(0, 0, 0, 0.4),
+            inset 0 1px 0 rgba(255, 255, 255, 0.1);
+          transition: background 0.05s, transform 0.05s;
+          transform: rotate(-10deg);
+        }
+
+        .meta-btn:active,
+        .meta-btn.active {
+          background: linear-gradient(145deg, #333, #1a1a1a);
+          transform: rotate(-10deg) translateY(1px);
+        }
+
+        /* A/B Buttons Container */
+        .ab-container {
+          display: flex;
+          gap: 15px;
+          transform: rotate(-25deg);
+          margin-top: 15px;
+        }
+
+        .ab-btn {
+          width: 60px;
+          height: 60px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-family: sans-serif;
+          font-weight: bold;
+          font-size: 18px;
+          border: 2px solid;
+          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5),
+            inset 0 2px 0 rgba(255, 255, 255, 0.2);
+          transition: transform 0.05s, box-shadow 0.05s;
+        }
+
+        .ab-btn:active,
+        .ab-btn.active {
+          transform: translateY(2px);
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5),
+            inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+
+        /* B button - maroon/wine color like original */
+        .btn-b {
+          background: linear-gradient(145deg, #8b3a62, #6b2a4a);
+          border-color: #5a2a3a;
+          color: #ffccdd;
+        }
+        .btn-b:active,
+        .btn-b.active {
+          background: linear-gradient(145deg, #6b2a4a, #4b1a3a);
+        }
+
+        /* A button - also maroon like original GB */
+        .btn-a {
+          background: linear-gradient(145deg, #8b3a62, #6b2a4a);
+          border-color: #5a2a3a;
+          color: #ffccdd;
+        }
+        .btn-a:active,
+        .btn-a.active {
+          background: linear-gradient(145deg, #6b2a4a, #4b1a3a);
+        }
+
+        /* Labels under buttons */
+        .ab-label {
+          position: absolute;
+          bottom: -18px;
+          font-size: 10px;
+          color: #555;
+          font-family: sans-serif;
+          text-transform: uppercase;
+        }
+
+        .ab-btn-wrapper {
+          position: relative;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
         }
       }
     </style>
-  <script type="importmap">
-{
-  "imports": {
-    "@google/genai": "https://esm.sh/@google/genai@^1.34.0"
-  }
-}
-</script>
-</head>
+    <script type="importmap">
+      {
+        "imports": {
+          "@google/genai": "https://esm.sh/@google/genai@^1.34.0"
+        }
+      }
+    </script>
+  </head>
   <body>
     <h1>pokemon_feverdream</h1>
-    
+
     <div class="main-container">
-      
       <!-- Explanation Pane -->
       <div id="explanation-pane" class="pane">
-        <p>This app generates Pokémon front sprites and names with Gemini models and then injects them into the running game's memory. A lightly patched ROM is used, exploiting some debug leftovers to boot directly into a battle.</p>
-        <p><strong>Instructions:</strong> Wait for generation. Click emulator to focus it. Press ENTER to pass the title screen, then use X and the arrow keys to navigate the nickname prompt. The battle should start.</p>
-        <p><strong>Known issues:</strong> Sometimes we inject data at the wrong time and end up with a mix of our generated data and Mew's original data (you'll see chunks of Mew's sprite mixed in, for instance). Also, if Gemini fails in some way, we end up using some placeholder data for a Pokemon called "FLAMORB". If either of those happen, refresh and try again. Sorry.</p>
-        <p>Also, this is supposed to keep generating new Pokemon and starting new fights forever. That's not working yet. Tedious synchronization issues are involved.</p>
+        <p>
+          This app generates Pokémon front sprites and names with Gemini models
+          and then injects them into the running game's memory. A lightly
+          patched ROM is used, exploiting some debug leftovers to boot directly
+          into a battle.
+        </p>
+        <p>
+          <strong>Instructions:</strong> Wait for generation. Click emulator to
+          focus it. Press ENTER to pass the title screen, then use X and the
+          arrow keys to navigate the nickname prompt. The battle should start.
+        </p>
+        <p>
+          <strong>Known issues:</strong> Sometimes we inject data at the wrong
+          time and end up with a mix of our generated data and Mew's original
+          data (you'll see chunks of Mew's sprite mixed in, for instance). Also,
+          if Gemini fails in some way, we end up using some placeholder data for
+          a Pokemon called "FLAMORB". If either of those happen, refresh and try
+          again. Sorry.
+        </p>
+        <p>
+          Also, this is supposed to keep generating new Pokemon and starting new
+          fights forever. That's not working yet. Tedious synchronization issues
+          are involved.
+        </p>
       </div>
 
       <!-- Game Pane -->
@@ -270,22 +511,58 @@
             <div class="dreaming-text">dreaming...</div>
           </div>
         </div>
-        <div class="controls-hint">click emulator to focus | Z/X: B/A | enter: start</div>
+        <div class="controls-hint">
+          click emulator to focus | Z/X: B/A | enter: start
+        </div>
         <div id="status">initializing...</div>
       </div>
-      
+
+      <!-- Mobile Controls (visible only on mobile) -->
+      <div id="mobile-controls">
+        <!-- D-Pad -->
+        <div class="dpad-container">
+          <div class="dpad-center"></div>
+          <button class="dpad-btn dpad-up" data-button="up">▲</button>
+          <button class="dpad-btn dpad-down" data-button="down">▼</button>
+          <button class="dpad-btn dpad-left" data-button="left">◀</button>
+          <button class="dpad-btn dpad-right" data-button="right">▶</button>
+        </div>
+
+        <!-- Start/Select -->
+        <div class="meta-container">
+          <button class="meta-btn" data-button="select">Select</button>
+          <button class="meta-btn" data-button="start">Start</button>
+        </div>
+
+        <!-- B/A Buttons -->
+        <div class="ab-container">
+          <div class="ab-btn-wrapper">
+            <button class="ab-btn btn-b" data-button="b">B</button>
+          </div>
+          <div class="ab-btn-wrapper">
+            <button class="ab-btn btn-a" data-button="a">A</button>
+          </div>
+        </div>
+      </div>
+
       <!-- Info Pane -->
       <div id="info-panel" class="pane">
         <div class="image-preview">
           <img id="raw-image" alt="generated_sprite" />
         </div>
         <div id="pokemon-info">
-          <div style="text-align: center; font-style: italic; color: #333; margin-top: 2rem;">
+          <div
+            style="
+              text-align: center;
+              font-style: italic;
+              color: #333;
+              margin-top: 2rem;
+            "
+          >
             waiting for signal...
           </div>
         </div>
       </div>
-
     </div>
     <script type="module" src="./index.tsx"></script>
   </body>

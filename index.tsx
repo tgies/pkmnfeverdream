@@ -192,6 +192,72 @@ function setupKeyboardInput(): void {
 }
 
 /**
+ * Handle touch input from mobile controls
+ */
+function setupMobileControls(): void {
+  const mobileControls = document.getElementById('mobile-controls');
+  if (!mobileControls) return;
+
+  const buttons = mobileControls.querySelectorAll('[data-button]');
+  
+  buttons.forEach(button => {
+    const buttonName = button.getAttribute('data-button') as 'up' | 'down' | 'left' | 'right' | 'a' | 'b' | 'start' | 'select';
+    if (!buttonName) return;
+
+    // Handle touch start - button pressed
+    button.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      button.classList.add('active');
+      if (emulator && injectionDone) {
+        emulator.setJoypad({ [buttonName]: true });
+      }
+    }, { passive: false });
+
+    // Handle touch end - button released
+    button.addEventListener('touchend', (e) => {
+      e.preventDefault();
+      button.classList.remove('active');
+      if (emulator) {
+        emulator.setJoypad({ [buttonName]: false });
+      }
+    }, { passive: false });
+
+    // Handle touch cancel (e.g., if user drags finger off button)
+    button.addEventListener('touchcancel', (e) => {
+      e.preventDefault();
+      button.classList.remove('active');
+      if (emulator) {
+        emulator.setJoypad({ [buttonName]: false });
+      }
+    }, { passive: false });
+
+    // Also handle mouse events for testing on desktop
+    button.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      button.classList.add('active');
+      if (emulator && injectionDone) {
+        emulator.setJoypad({ [buttonName]: true });
+      }
+    });
+
+    button.addEventListener('mouseup', (e) => {
+      e.preventDefault();
+      button.classList.remove('active');
+      if (emulator) {
+        emulator.setJoypad({ [buttonName]: false });
+      }
+    });
+
+    button.addEventListener('mouseleave', () => {
+      button.classList.remove('active');
+      if (emulator) {
+        emulator.setJoypad({ [buttonName]: false });
+      }
+    });
+  });
+}
+
+/**
  * Handle battle controller events
  */
 function onBattleStateChange(state: BattleState): void {
@@ -303,6 +369,7 @@ async function init(): Promise<void> {
     
     // Set up input
     setupKeyboardInput();
+    setupMobileControls();
     
     // Show overlay while booting + generating
     setGenerationOverlay(true);
