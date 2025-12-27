@@ -178,13 +178,12 @@ export class SpriteEncoder {
             // Calculate brightness (0-255)
             const brightness = (r + g + b) / 3;
             
-            // Weight function: (255 - brightness + 1)^3
-            // This drastically favors dark pixels.
-            // White (255) -> 1^3 = 1
-            // Black (0)   -> 256^3 = 16,777,216
-            // 50% Gray (128) -> 128^3 = 2,097,152
-            // A black pixel is ~8x more important than a gray one
-            const weight = Math.pow(255 - brightness + 1, 3);
+            // Weight function: (255 - brightness + 1)^2
+            // White (255) -> 1^2 = 1
+            // Black (0)   -> 256^2 = 65,536
+            // 50% Gray (128) -> 128^2 = 16,384
+            // A black pixel is ~4x more important than a gray one
+            const weight = Math.pow(255 - brightness + 1, 2);
             
             accR += r * weight;
             accG += g * weight;
