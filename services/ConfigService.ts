@@ -20,10 +20,9 @@ export interface ConfigState {
 
 export type ConfigChangeListener = (config: ConfigState) => void;
 
-const DEFAULT_NAME_PROMPT = `Generate a single creative Pokemon-style name for a {type}-type creature. 
-The name should be:
-- 3-10 characters long
-- Easy to pronounce
+const DEFAULT_NAME_PROMPT = `Make up a single creative and original Pokemon-style name for a {type}-type creature.
+The name should:
+- Be 3-10 characters long
 - Sound like it could be a real Pokemon name
 - Not be an existing Pokemon name
 
