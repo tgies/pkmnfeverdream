@@ -45,8 +45,7 @@ export function isApiAvailable(): boolean {
  * Generates a Pokemon name using the Gemini text model.
  */
 export async function generatePokemonName(primaryType: string): Promise<string> {
-  try {
-    const prompt = `Generate a single creative Pokemon-style name for a ${primaryType}-type creature. 
+  const prompt = `Generate a single creative Pokemon-style name for a ${primaryType}-type creature. 
 The name should be:
 - 3-10 characters long
 - Easy to pronounce
@@ -55,6 +54,7 @@ The name should be:
 
 Reply with ONLY the name, nothing else.`;
 
+  try {
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
       contents: prompt,
@@ -68,7 +68,24 @@ Reply with ONLY the name, nothing else.`;
     const name = response.text?.trim().toUpperCase().slice(0, 10) || 'UNKNOWN';
     // Remove any non-alphanumeric characters
     return name.replace(/[^A-Z]/g, '').slice(0, 10);
-  } catch (error) {
+  } catch (error: any) {
+    // Fallback to gemini-2.5-flash on 429 rate limit
+    if (error?.status === 429 || error?.httpStatusCode === 429 || error?.message?.includes('429')) {
+      console.warn("Rate limited on gemini-3-flash-preview, falling back to gemini-2.5-flash");
+      try {
+        const fallbackResponse = await ai.models.generateContent({
+          model: 'gemini-2.5-flash',
+          contents: prompt,
+          // Note: thinkingConfig is omitted as gemini-2.5-flash does not support thinkingLevel
+        });
+
+        const name = fallbackResponse.text?.trim().toUpperCase().slice(0, 10) || 'UNKNOWN';
+        return name.replace(/[^A-Z]/g, '').slice(0, 10);
+      } catch (fallbackError) {
+        console.error("Fallback name generation error:", fallbackError);
+        throw fallbackError;
+      }
+    }
     console.error("Name generation error:", error);
     throw error;
   }
