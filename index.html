@@ -584,6 +584,13 @@
     }
 
     @media (max-width: 700px) {
+      .main-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem;
+      }
+
       canvas#screen {
         width: 100%;
         height: auto;
@@ -753,15 +760,17 @@
     }
 
     /* Desktop: Settings toggle hidden, content always visible */
-    #settings-pane .settings-toggle {
-      display: none;
-    }
+    @media (min-width: 701px) {
+      #settings-pane .settings-toggle {
+        display: none;
+      }
 
-    #settings-pane .settings-drawer {
-      display: block;
-      max-height: none;
-      opacity: 1;
-      padding: 0;
+      #settings-pane .settings-drawer {
+        display: block;
+        max-height: none;
+        opacity: 1;
+        padding: 0;
+      }
     }
 
     .settings-title {
