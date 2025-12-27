@@ -153,8 +153,9 @@ export function setupTestBattle(
   emulator.writeMemoryBlock(WRAM.wPartyMon1OT, encodeString('ASH'));
   
   // 5. Set current species/level for AddPartyMon
-  emulator.writeMemory(WRAM.wCurPartySpecies, setup.playerPokemon.species);
-  emulator.writeMemory(WRAM.wCurEnemyLevel, setup.playerPokemon.level);
+  // REMOVED: These writes cause side effects ($D127 is shared)
+  // emulator.writeMemory(WRAM.wCurPartySpecies, setup.playerPokemon.species);
+  // emulator.writeMemory(WRAM.wCurEnemyLevel, setup.playerPokemon.level);
   
   // 6. Set up the opponent
   // For a wild battle, wCurOpponent is the species
@@ -162,7 +163,8 @@ export function setupTestBattle(
   emulator.writeMemory(WRAM.wEnemyMonSpecies2, setup.enemyPokemon.species);
   
   // Set enemy level
-  emulator.writeMemory(WRAM.wCurEnemyLevel, setup.enemyPokemon.level);
+  // REMOVED: Managed by BattleController breakpoint to avoid overworld memory pollution
+  // emulator.writeMemory(WRAM.wCurEnemyLevel, setup.enemyPokemon.level);
   
   // Write enemy nickname
   emulator.writeMemoryBlock(WRAM.wEnemyMonNick, encodeString(setup.enemyPokemon.name.toUpperCase()));
