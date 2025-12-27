@@ -103,6 +103,17 @@ export class PokemonGenerationService {
   }
   
   /**
+   * Invalidate (clear) all queued Pokemon
+   * Used when config changes require regeneration with new settings
+   */
+  invalidateQueue(): void {
+    console.log(`🗑️ Invalidating ${this.queue.length} queued Pokemon`);
+    this.queue = [];
+    // Note: if generation is in progress, it will complete but the result
+    // may use old settings. The caller should trigger a new generation after.
+  }
+  
+  /**
    * Get next Pokemon from queue (non-blocking)
    * Returns null if none ready
    */

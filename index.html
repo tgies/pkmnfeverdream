@@ -16,6 +16,36 @@
         box-sizing: border-box;
       }
 
+      /* Custom scrollbar styling */
+      ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+
+      ::-webkit-scrollbar-track {
+        background: var(--bg);
+        border-left: 1px solid var(--border);
+      }
+
+      ::-webkit-scrollbar-thumb {
+        background: #333;
+        border-radius: 4px;
+      }
+
+      ::-webkit-scrollbar-thumb:hover {
+        background: #444;
+      }
+
+      ::-webkit-scrollbar-corner {
+        background: var(--bg);
+      }
+
+      /* Firefox scrollbar */
+      * {
+        scrollbar-width: thin;
+        scrollbar-color: #333 var(--bg);
+      }
+
       body {
         margin: 0;
         padding: 4rem 2rem;
@@ -52,7 +82,7 @@
       }
 
       .pane {
-        width: 300px;
+        width: 340px;
         padding-top: 10px;
       }
 
@@ -132,6 +162,8 @@
         flex-direction: column;
         gap: 2rem;
         align-items: center;
+        max-height: 600px;
+        overflow-y: auto;
       }
 
       .image-preview {
@@ -384,6 +416,224 @@
       }
 
       /* ==========================================
+         Settings Pane
+         ========================================== */
+      #settings-pane {
+        width: 100%;
+        margin-top: 1rem;
+        border-top: 1px solid var(--border);
+        padding-top: 1rem;
+      }
+
+      /* Desktop: Settings toggle hidden, content always visible */
+      #settings-pane .settings-toggle {
+        display: none;
+      }
+
+      #settings-pane .settings-drawer {
+        display: block;
+        max-height: none;
+        opacity: 1;
+        padding: 0;
+      }
+
+      .settings-title {
+        font-size: 10px;
+        font-weight: normal;
+        color: #555;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin: 0 0 1rem 0;
+      }
+
+      .settings-section {
+        margin-bottom: 1rem;
+      }
+
+      .settings-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 6px;
+      }
+
+      .settings-label {
+        display: block;
+        color: #555;
+        text-transform: uppercase;
+        font-size: 10px;
+        letter-spacing: 1px;
+      }
+
+      .reset-btn {
+        background: transparent;
+        border: 1px solid #333;
+        color: #555;
+        font-size: 12px;
+        padding: 2px 6px;
+        cursor: pointer;
+        border-radius: 2px;
+        transition: all 0.15s ease;
+      }
+
+      .reset-btn:hover {
+        background: rgba(255, 255, 255, 0.05);
+        color: #888;
+        border-color: #444;
+      }
+
+      #settings-pane textarea {
+        width: 100%;
+        background: #0a0a0a;
+        border: 1px solid #222;
+        color: #888;
+        font-family: inherit;
+        font-size: 11px;
+        padding: 8px;
+        resize: vertical;
+        min-height: 60px;
+      }
+
+      #settings-pane textarea:focus {
+        outline: none;
+        border-color: #444;
+        color: #aaa;
+      }
+
+      .threshold-controls {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .threshold-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .threshold-label {
+        width: 60px;
+        font-size: 10px;
+        color: #666;
+      }
+
+      .threshold-row input[type="range"] {
+        flex: 1;
+        accent-color: #555;
+        height: 4px;
+      }
+
+      .threshold-val {
+        width: 30px;
+        text-align: right;
+        font-size: 11px;
+        color: #666;
+        font-family: monospace;
+      }
+
+      .preview-section {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      #threshold-preview {
+        width: 112px;
+        height: 112px;
+        image-rendering: pixelated;
+        border: 1px solid #222;
+        background: #fff;
+      }
+
+      .settings-btn {
+        width: 100%;
+        padding: 10px;
+        background: linear-gradient(145deg, #2a2a2a, #1a1a1a);
+        border: 1px solid #333;
+        color: #888;
+        font-family: inherit;
+        font-size: 11px;
+        letter-spacing: 1px;
+        cursor: pointer;
+        transition: all 0.15s ease;
+      }
+
+      .settings-btn:hover {
+        background: linear-gradient(145deg, #333, #222);
+        border-color: #444;
+        color: #aaa;
+      }
+
+      .settings-btn:active {
+        background: linear-gradient(145deg, #222, #111);
+      }
+
+      /* Mobile: Settings pane as drawer */
+      @media (max-width: 700px) {
+        #settings-pane {
+          position: fixed;
+          bottom: 190px;
+          left: 0.5rem;
+          width: auto;
+          border: none;
+          padding: 0;
+          margin: 0;
+          z-index: 200;
+        }
+
+        #settings-pane .settings-title {
+          display: none;
+        }
+
+        #settings-pane .settings-toggle {
+          display: flex;
+          align-items: center;
+          gap: 0.4em;
+          padding: 4px 8px;
+          background: rgba(20, 20, 20, 0.9);
+          border: 1px solid #333;
+          border-radius: 3px;
+          color: #666;
+          font-family: inherit;
+          font-size: 9px;
+          letter-spacing: 0.5px;
+          cursor: pointer;
+        }
+
+        #settings-pane .settings-toggle:active {
+          background: rgba(30, 30, 30, 0.95);
+        }
+
+        #settings-pane .settings-drawer {
+          position: absolute;
+          bottom: 100%;
+          left: 0;
+          width: 280px;
+          max-width: 85vw;
+          margin-bottom: 4px;
+          background: rgba(10, 10, 10, 0.97);
+          border: 1px solid #333;
+          border-radius: 3px;
+          max-height: 0;
+          overflow: hidden;
+          opacity: 0;
+          transition: max-height 0.3s ease, opacity 0.2s ease;
+        }
+
+        #settings-pane .settings-drawer.expanded {
+          max-height: 70vh;
+          opacity: 1;
+          padding: 10px 12px;
+          overflow-y: auto;
+        }
+
+        #settings-pane textarea {
+          font-size: 12px;
+        }
+      }
+
+      /* ==========================================
          Mobile Gamepad Controls
          ========================================== */
       #mobile-controls {
@@ -485,7 +735,7 @@
           transform: translateX(-50%);
           display: flex;
           flex-direction: row;
-          gap: 16px;
+          gap: 10px;
         }
 
         .meta-btn {
@@ -505,13 +755,13 @@
           box-shadow: 0 2px 3px rgba(0, 0, 0, 0.4),
             inset 0 1px 0 rgba(255, 255, 255, 0.1);
           transition: background 0.05s, transform 0.05s;
-          transform: rotate(-10deg);
+          transform: rotate(-15deg);
         }
 
         .meta-btn:active,
         .meta-btn.active {
           background: linear-gradient(145deg, #333, #1a1a1a);
-          transform: rotate(-10deg) translateY(1px);
+          transform: rotate(-15eg) translateY(1px);
         }
 
         /* A/B Buttons Container */
@@ -615,26 +865,54 @@
         </button>
         <div id="explanation-content" class="drawer-content">
           <p>
-            This app generates Pokémon front sprites and names with Gemini models
-            and then injects them into the running game's memory. A lightly
-            patched ROM is used, exploiting some debug leftovers to boot directly
-            into a battle.
+            <strong>What is this?</strong> Battle infinite Pokémon and never
+            know peace.
           </p>
           <p>
-            <strong>Instructions:</strong> Wait for generation. Click emulator to
-            focus it. Press ENTER to pass the title screen, then use X and the
-            arrow keys to navigate the nickname prompt. The battle should start.
+            This app generates Pokémon front sprites and names with Gemini models,
+            then injects them into the running game's memory, so you can battle
+            them.
           </p>
           <p>
-            <strong>Known issues:</strong> Sometimes we inject data at the wrong
-            time and end up with a mix of generated data and Mew's data (e.g.,
-            you'll see chunks of Mew's sprite mixed in). Also, if Gemini fails,
-            we use placeholder data for a Pokemon called "FLAMORB". If either of
-            those happen, refresh and try again. Sorry.
+            <strong>Instructions:</strong> Wait for generation. Click game to
+            focus input. ENTER at title, X to select.
           </p>
           <p>
-            This is supposed to keep generating new Pokemon and starting new fights
-            forever. That's not working reliably. It might sometimes, though!
+            <strong>Known issues:</strong> If Gemini fails, you get "FLAMORB".
+            If you see "FLAMORB", refresh and try again. Sorry. I am trying to get
+            rid of him.
+          </p>
+          <p>
+            <strong>How does it work?</strong> We use
+            <a href="https://github.com/nickshanks/binjgb" style="color: #888;">binjgb</a>,
+            a Game Boy emulator that lets us read and write the emulated console's
+            memory while the game runs.
+          </p>
+          <p>
+            To know <em>where</em> to write, we rely on
+            <a href="https://github.com/pret/pokered" style="color: #888;">pokered</a>,
+            a disassembly of Pokémon Red. A disassembly is source code
+            reconstructed from a compiled binary. It shows the exact memory
+            addresses for things like Pokémon names and sprite data, and how
+            the game expects them to be formatted. We also use it to build a
+            modified ROM that boots straight into battle mode.
+          </p>
+          <p>
+            The trick is <em>timing</em>. We attach code to the emulator to set a
+            <a href="https://en.wikipedia.org/wiki/Breakpoint" style="color: #888;">breakpoint</a>.
+            When we see the game about to execute CPU instructions from the
+            address we know is the start of the "load front sprite" code, we
+            write our AI-generated sprite (converted to the Game Boy's tile 
+            format) and name to the place where the game expects it, then 
+            "skip over" the game's sprite loading code.
+          </p>
+          <p>
+            <strong>Areas for improvement:</strong> 
+            <ul>
+              <li>generate entire movesets</li>
+              <li>and <a href="https://ardean.github.io/pokemon-gen1-cry-synthesizer/" style="color: #888;">cries</a></li>
+              <li>other dumb stuff also</li>
+            </ul>
           </p>
         </div>
       </div>
@@ -698,21 +976,76 @@
             waiting for signal...
           </div>
         </div>
+
+        <!-- Settings Pane -->
+        <div id="settings-pane">
+          <h3 class="settings-title">Advanced Settings</h3>
+          <button class="drawer-toggle settings-toggle" aria-expanded="false" aria-controls="settings-content">
+            <span>⚙ Advanced Settings</span>
+            <span class="toggle-icon">▲</span>
+          </button>
+          <div id="settings-content" class="drawer-content settings-drawer">
+            <div class="settings-section">
+              <div class="settings-header">
+                <label class="settings-label">Name Prompt Template</label>
+                <button class="reset-btn" id="reset-name-prompt" title="Reset to default">↺</button>
+              </div>
+              <textarea id="name-prompt" rows="5" placeholder="Use {type} for Pokemon type"></textarea>
+            </div>
+            <div class="settings-section">
+              <div class="settings-header">
+                <label class="settings-label">Image Prompt Template</label>
+                <button class="reset-btn" id="reset-image-prompt" title="Reset to default">↺</button>
+              </div>
+              <textarea id="image-prompt" rows="3" placeholder="Use {type} and {name} for substitution"></textarea>
+            </div>
+            <div class="settings-section">
+              <label class="settings-label">2bpp Thresholds</label>
+              <div class="threshold-controls">
+                <div class="threshold-row">
+                  <span class="threshold-label">Black (&lt;)</span>
+                  <input type="range" id="threshold-black" min="0" max="255" value="96" />
+                  <span id="threshold-black-val" class="threshold-val">96</span>
+                </div>
+                <div class="threshold-row">
+                  <span class="threshold-label">Dark (&lt;)</span>
+                  <input type="range" id="threshold-dark" min="0" max="255" value="150" />
+                  <span id="threshold-dark-val" class="threshold-val">150</span>
+                </div>
+                <div class="threshold-row">
+                  <span class="threshold-label">Light (&lt;)</span>
+                  <input type="range" id="threshold-light" min="0" max="255" value="224" />
+                  <span id="threshold-light-val" class="threshold-val">224</span>
+                </div>
+              </div>
+            </div>
+            <div class="settings-section preview-section">
+              <label class="settings-label">2bpp Preview</label>
+              <canvas id="threshold-preview" width="56" height="56"></canvas>
+            </div>
+            <button id="regenerate-btn" class="settings-btn">🔄 Regenerate Now</button>
+          </div>
+        </div>
       </div>
     </div>
     <script>
       // Drawer toggle functionality for mobile
       document.addEventListener('DOMContentLoaded', () => {
-        const toggle = document.querySelector('.drawer-toggle');
-        const content = document.getElementById('explanation-content');
+        // Handle all drawer toggles
+        const toggles = document.querySelectorAll('.drawer-toggle');
         
-        if (toggle && content) {
-          toggle.addEventListener('click', () => {
-            const isExpanded = toggle.getAttribute('aria-expanded') === 'true';
-            toggle.setAttribute('aria-expanded', !isExpanded);
-            content.classList.toggle('expanded', !isExpanded);
-          });
-        }
+        toggles.forEach(toggle => {
+          const contentId = toggle.getAttribute('aria-controls');
+          const content = document.getElementById(contentId);
+          
+          if (content) {
+            toggle.addEventListener('click', () => {
+              const isExpanded = toggle.getAttribute('aria-expanded') === 'true';
+              toggle.setAttribute('aria-expanded', !isExpanded);
+              content.classList.toggle('expanded', !isExpanded);
+            });
+          }
+        });
       });
     </script>
     <script type="module" src="./index.tsx"></script>

@@ -2,6 +2,8 @@
  * SpriteEncoder - Converts images to Game Boy 2bpp format
  */
 
+import { ConfigService, ThresholdConfig } from '../services/ConfigService';
+
 export class SpriteEncoder {
   private static readonly WIDTH = 56;
   private static readonly HEIGHT = 56;
@@ -26,13 +28,46 @@ export class SpriteEncoder {
   /**
    * Encode an HTMLImageElement to GB 2bpp format
    */
-  private encodeFromImage(img: HTMLImageElement): Uint8Array {
+  private encodeFromImage(img: HTMLImageElement, thresholds?: ThresholdConfig): Uint8Array {
     // Process image: crop whitespace and scale to fit 56x56
     const imageData = this.processImage(img);
-    const pixels = this.quantize(imageData);
+    const effectiveThresholds = thresholds ?? ConfigService.getThresholds();
+    const pixels = this.quantize(imageData, effectiveThresholds);
     
     // Encode to 2bpp
     return this.encode2bpp(pixels);
+  }
+
+  /**
+   * Generate a preview ImageData showing how the image will look quantized
+   * Returns a 56x56 ImageData in grayscale
+   */
+  async generatePreview(dataUrl: string, thresholds?: ThresholdConfig): Promise<ImageData> {
+    const img = await this.loadImage(dataUrl);
+    const imageData = this.processImage(img);
+    const effectiveThresholds = thresholds ?? ConfigService.getThresholds();
+    const pixels = this.quantize(imageData, effectiveThresholds);
+    
+    // Convert quantized pixels back to viewable ImageData
+    return this.pixelsToImageData(pixels);
+  }
+
+  /**
+   * Convert quantized pixels (0-3) to grayscale ImageData for preview
+   */
+  private pixelsToImageData(pixels: Uint8Array): ImageData {
+    const imageData = new ImageData(SpriteEncoder.WIDTH, SpriteEncoder.HEIGHT);
+    const colorMap = [255, 170, 85, 0]; // 0=white, 1=light gray, 2=dark gray, 3=black
+    
+    for (let i = 0; i < pixels.length; i++) {
+      const gray = colorMap[pixels[i]];
+      imageData.data[i * 4] = gray;     // R
+      imageData.data[i * 4 + 1] = gray; // G
+      imageData.data[i * 4 + 2] = gray; // B
+      imageData.data[i * 4 + 3] = 255;  // A
+    }
+    
+    return imageData;
   }
 
   /**
@@ -145,11 +180,11 @@ export class SpriteEncoder {
   }
   
   /**
-   * Quantize pixels to 4 colors (0-3)
+   * Quantize pixels to 4 colors (0-3) using configurable thresholds
    * 0 (White) -> 3 (Black) mapping depends on palette,
    * but typically 0=White, 3=Black in standard encoding
    */
-  private quantize(imageData: ImageData): Uint8Array {
+  private quantize(imageData: ImageData, thresholds: ThresholdConfig): Uint8Array {
     const { width, height, data } = imageData;
     const output = new Uint8Array(width * height);
     
@@ -161,14 +196,14 @@ export class SpriteEncoder {
       // Simple grayscale conversion
       const brightness = (r + g + b) / 3;
       
-      // Map brightness to 0-3 (Game Boy colors)
+      // Map brightness to 0-3 (Game Boy colors) using configurable thresholds
       // 255 (White) -> 0
       // 0 (Black) -> 3
       let color = 0;
-      if (brightness < 96) color = 3;      // Black
-      else if (brightness < 150) color = 2; // Dark Gray
-      else if (brightness < 224) color = 1; // Light Gray
-      else color = 0;                       // White
+      if (brightness < thresholds.black) color = 3;           // Black
+      else if (brightness < thresholds.darkGray) color = 2;   // Dark Gray
+      else if (brightness < thresholds.lightGray) color = 1;  // Light Gray
+      else color = 0;                                          // White
       
       output[i] = color;
     }

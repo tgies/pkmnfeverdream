@@ -6,6 +6,8 @@ import { EmulatorWrapper } from './emulator/EmulatorWrapper';
 import { BattleController, type BattleState } from './battle/BattleController';
 import { PokemonGenerationService, type GeneratedPokemon } from './services/PokemonGenerationService';
 import { getTypeName } from './services/gemini';
+import { ConfigService } from './services/ConfigService';
+import { SpriteEncoder } from './graphics/SpriteEncoder';
 
 // Global emulator stub required by binjgb when compiled with RGBDS_LIVE
 // The C code calls EM_ASM({emulator.serialCallback($0);}, value) for serial debugging
@@ -24,12 +26,28 @@ const generationOverlay = document.getElementById('generation-overlay')!;
 const rawImageEl = document.getElementById('raw-image') as HTMLImageElement;
 const infoEl = document.getElementById('pokemon-info')!;
 
+// Settings DOM elements
+const namePromptEl = document.getElementById('name-prompt') as HTMLTextAreaElement;
+const imagePromptEl = document.getElementById('image-prompt') as HTMLTextAreaElement;
+const thresholdBlackEl = document.getElementById('threshold-black') as HTMLInputElement;
+const thresholdDarkEl = document.getElementById('threshold-dark') as HTMLInputElement;
+const thresholdLightEl = document.getElementById('threshold-light') as HTMLInputElement;
+const thresholdBlackValEl = document.getElementById('threshold-black-val')!;
+const thresholdDarkValEl = document.getElementById('threshold-dark-val')!;
+const thresholdLightValEl = document.getElementById('threshold-light-val')!;
+const thresholdPreviewEl = document.getElementById('threshold-preview') as HTMLCanvasElement;
+const regenerateBtnEl = document.getElementById('regenerate-btn') as HTMLButtonElement;
+const resetNamePromptEl = document.getElementById('reset-name-prompt') as HTMLButtonElement;
+const resetImagePromptEl = document.getElementById('reset-image-prompt') as HTMLButtonElement;
+
 // Application state
 let emulator: EmulatorWrapper | null = null;
 let battleController: BattleController | null = null;
 let generationService: PokemonGenerationService | null = null;
 let running = false;
 let paused = false;
+let currentSpriteDataUrl: string | null = null; // Track current sprite for preview updates
+const spriteEncoder = new SpriteEncoder(); // For preview generation
 
 // Screen dimensions
 const GB_WIDTH = 160;
@@ -267,6 +285,125 @@ function setupMobileControls(): void {
 }
 
 /**
+ * Update the 2bpp threshold preview canvas
+ */
+async function updateThresholdPreview(): Promise<void> {
+  if (!currentSpriteDataUrl) return;
+  
+  try {
+    const thresholds = ConfigService.getThresholds();
+    const previewData = await spriteEncoder.generatePreview(currentSpriteDataUrl, thresholds);
+    
+    const previewCtx = thresholdPreviewEl.getContext('2d');
+    if (previewCtx) {
+      previewCtx.putImageData(previewData, 0, 0);
+    }
+  } catch (error) {
+    console.error('Failed to update threshold preview:', error);
+  }
+}
+
+/**
+ * Set up settings pane interactions
+ */
+function setupSettings(): void {
+  // Initialize UI from ConfigService state
+  const config = ConfigService.getState();
+  namePromptEl.value = config.namePromptTemplate;
+  imagePromptEl.value = config.imagePromptTemplate;
+  thresholdBlackEl.value = String(config.thresholds.black);
+  thresholdDarkEl.value = String(config.thresholds.darkGray);
+  thresholdLightEl.value = String(config.thresholds.lightGray);
+  thresholdBlackValEl.textContent = String(config.thresholds.black);
+  thresholdDarkValEl.textContent = String(config.thresholds.darkGray);
+  thresholdLightValEl.textContent = String(config.thresholds.lightGray);
+
+  // Prompt template changes (save on blur to avoid constant updates while typing)
+  namePromptEl.addEventListener('blur', () => {
+    ConfigService.setNamePromptTemplate(namePromptEl.value);
+    console.log('📝 Name prompt template updated');
+  });
+
+  imagePromptEl.addEventListener('blur', () => {
+    ConfigService.setImagePromptTemplate(imagePromptEl.value);
+    console.log('📝 Image prompt template updated');
+  });
+
+  // Reset buttons for prompts
+  resetNamePromptEl.addEventListener('click', () => {
+    const defaultPrompt = ConfigService.resetNamePrompt();
+    namePromptEl.value = defaultPrompt;
+    console.log('↺ Name prompt reset to default');
+  });
+
+  resetImagePromptEl.addEventListener('click', () => {
+    const defaultPrompt = ConfigService.resetImagePrompt();
+    imagePromptEl.value = defaultPrompt;
+    console.log('↺ Image prompt reset to default');
+  });
+
+  // Threshold slider changes (live update)
+  thresholdBlackEl.addEventListener('input', () => {
+    const value = parseInt(thresholdBlackEl.value, 10);
+    thresholdBlackValEl.textContent = String(value);
+    ConfigService.setThresholds({ black: value });
+    updateThresholdPreview();
+  });
+
+  thresholdDarkEl.addEventListener('input', () => {
+    const value = parseInt(thresholdDarkEl.value, 10);
+    thresholdDarkValEl.textContent = String(value);
+    ConfigService.setThresholds({ darkGray: value });
+    updateThresholdPreview();
+  });
+
+  thresholdLightEl.addEventListener('input', () => {
+    const value = parseInt(thresholdLightEl.value, 10);
+    thresholdLightValEl.textContent = String(value);
+    ConfigService.setThresholds({ lightGray: value });
+    updateThresholdPreview();
+  });
+
+  // Regenerate button
+  regenerateBtnEl.addEventListener('click', async () => {
+    if (!generationService) return;
+    
+    console.log('🔄 Regenerating with new settings...');
+    updateStatus('🔄 Regenerating with new settings...');
+    
+    // Invalidate queue and trigger new generation
+    generationService.invalidateQueue();
+    setGenerationOverlay(true);
+    
+    try {
+      const pokemon = await generationService.getNext();
+      
+      if (battleController) {
+        battleController.injectGeneratedPokemon(pokemon);
+      }
+      
+      // Update preview
+      if (pokemon.spriteDataUrl) {
+        currentSpriteDataUrl = pokemon.spriteDataUrl;
+        rawImageEl.src = pokemon.spriteDataUrl;
+        rawImageEl.classList.add('loaded');
+        updateThresholdPreview();
+      }
+      
+      // Update info display
+      onPokemonGenerated(pokemon);
+      
+      setGenerationOverlay(false);
+      updateStatus(`✅ Regenerated: ${pokemon.name} (Lv.${pokemon.level})`);
+    } catch (error) {
+      console.error('Regeneration failed:', error);
+      updateStatus('❌ Regeneration failed');
+      setGenerationOverlay(false);
+    }
+  });
+}
+
+/**
  * Handle battle controller events
  */
 function onBattleStateChange(state: BattleState): void {
@@ -302,10 +439,12 @@ function onPokemonGenerated(pokemon: GeneratedPokemon): void {
   console.log('Generated Pokemon:', pokemon.name, 'Lv.', pokemon.level);
   setGenerationOverlay(false);
   
-  // Update raw image
+  // Update raw image and track for preview
   if (pokemon.spriteDataUrl) {
+    currentSpriteDataUrl = pokemon.spriteDataUrl;
     rawImageEl.src = pokemon.spriteDataUrl;
     rawImageEl.classList.add('loaded');
+    updateThresholdPreview();
   } else {
     rawImageEl.src = '';
     rawImageEl.classList.remove('loaded');
@@ -344,6 +483,9 @@ function onBattleEnd(result: 'win' | 'lose' | 'draw' | 'ran'): void {
  * Initialize the application
  */
 async function init(): Promise<void> {
+  // Set up settings pane immediately (doesn't depend on ROM/emulator)
+  setupSettings();
+  
   updateStatus('Loading emulator...');
   
   try {

@@ -4,9 +4,18 @@
  */
 
 import { GoogleGenAI, ThinkingLevel } from "@google/genai";
+import { ConfigService } from './ConfigService';
 
 // Initialize the API client - AI Studio provides process.env.API_KEY
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+// Guard against missing API key in development
+let ai: GoogleGenAI | null = null;
+try {
+  if (process.env.API_KEY) {
+    ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  }
+} catch (e) {
+  console.warn('Gemini API initialization skipped - no API key available');
+}
 
 /**
  * Pokemon type names for prompt generation
@@ -36,23 +45,20 @@ export function getTypeName(typeId: number): string {
   return TYPE_NAMES[typeId] ?? 'Normal';
 }
 
-// Check if API is available (always true in AI Studio)
+// Check if API is available
 export function isApiAvailable(): boolean {
-  return true;
+  return ai !== null;
 }
 
 /**
  * Generates a Pokemon name using the Gemini text model.
  */
 export async function generatePokemonName(primaryType: string): Promise<string> {
-  const prompt = `Generate a single creative Pokemon-style name for a ${primaryType}-type creature. 
-The name should be:
-- 3-10 characters long
-- Easy to pronounce
-- Sound like it could be a real Pokemon name
-- Not be an existing Pokemon name
-
-Reply with ONLY the name, nothing else.`;
+  if (!ai) {
+    throw new Error('Gemini API not available');
+  }
+  
+  const prompt = ConfigService.getNamePrompt(primaryType);
 
   try {
     const response = await ai.models.generateContent({
@@ -97,8 +103,12 @@ Reply with ONLY the name, nothing else.`;
  * Uses the same pattern as the ai-studio-template.
  */
 export async function generateSpriteImage(name: string, primaryType: string): Promise<string> {
+  if (!ai) {
+    throw new Error('Gemini API not available');
+  }
+  
   try {
-    const prompt = `A simple 2-bit grayscale front battle sprite for a Pokemon Red/Blue ${primaryType}-type Pokemon named ${name}. No text, white background. Low detail, low resolution (56x56).`;
+    const prompt = ConfigService.getImagePrompt(name, primaryType);
 
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash-image', // Same as ai-studio-template
