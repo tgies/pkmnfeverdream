@@ -180,6 +180,10 @@
       background: #080808;
     }
 
+    #camera-preview.mirrored {
+      transform: scaleX(-1);
+    }
+
     #photo-preview {
       display: none;
       width: 640px;
@@ -282,8 +286,8 @@
 
     #flip-camera-btn {
       position: absolute;
-      top: 10px;
-      left: 10px;
+      bottom: 110px;
+      right: 10px;
       width: 36px;
       height: 36px;
       border-radius: 50%;
