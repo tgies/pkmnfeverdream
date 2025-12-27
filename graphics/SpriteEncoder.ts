@@ -108,23 +108,109 @@ export class SpriteEncoder {
         SpriteEncoder.HEIGHT / height
       );
       
-      const finalWidth = width * scale;
-      const finalHeight = height * scale;
+      const finalWidth = Math.floor(width * scale);
+      const finalHeight = Math.floor(height * scale);
       
-      const dx = (SpriteEncoder.WIDTH - finalWidth) / 2;
-      const dy = (SpriteEncoder.HEIGHT - finalHeight) / 2;
+      const dx = Math.floor((SpriteEncoder.WIDTH - finalWidth) / 2);
+      const dy = Math.floor((SpriteEncoder.HEIGHT - finalHeight) / 2);
       
-      destCtx.imageSmoothingEnabled = true;
-      destCtx.imageSmoothingQuality = 'high';
-      
-      destCtx.drawImage(
-        srcCanvas, 
-        bounds.minX, bounds.minY, width, height,
-        dx, dy, finalWidth, finalHeight
+      // Use custom downscaling to preserve fine details (black lines)
+      // Standard canvas drawImage tends to wash them out with bilinear filtering
+      const scaledData = this.downscaleWithDetailPreservation(
+        srcData, 
+        bounds.minX, bounds.minY, width, height, 
+        finalWidth, finalHeight
       );
+      
+      destCtx.putImageData(scaledData, dx, dy);
     }
     
     return destCtx.getImageData(0, 0, SpriteEncoder.WIDTH, SpriteEncoder.HEIGHT);
+  }
+
+  /**
+   * Custom downsealing algorithm that prioritizes dark pixels.
+   * Standard resizing averages pixels, causing thin black lines to turn gray/white and disappear.
+   * This uses a weighted average based on inverse brightness: darker pixels have much higher weight.
+   */
+  private downscaleWithDetailPreservation(
+    srcBox: ImageData, 
+    srcX: number, srcY: number, srcW: number, srcH: number,
+    destW: number, destH: number
+  ): ImageData {
+    const dest = new ImageData(destW, destH);
+    const sData = srcBox.data;
+    const dData = dest.data;
+    const sWidth = srcBox.width; // Stride of the source image
+    
+    const xRatio = srcW / destW;
+    const yRatio = srcH / destH;
+    
+    for (let y = 0; y < destH; y++) {
+      for (let x = 0; x < destW; x++) {
+        // Map destination pixel to source region
+        const sourceStartX = Math.floor(x * xRatio);
+        const sourceStartY = Math.floor(y * yRatio);
+        const sourceEndX = Math.min(srcW, Math.ceil((x + 1) * xRatio));
+        const sourceEndY = Math.min(srcH, Math.ceil((y + 1) * yRatio));
+        
+        // Accumulators for weighted average
+        let accR = 0;
+        let accG = 0;
+        let accB = 0;
+        let totalWeight = 0;
+        
+        // Iterate over the source region for this pixel
+        // Add offset (srcX, srcY) to coordinates
+        for (let sy = sourceStartY; sy < sourceEndY; sy++) {
+          for (let sx = sourceStartX; sx < sourceEndX; sx++) {
+            // Calculate actual index in the source ImageData
+            const idx = ((srcY + sy) * sWidth + (srcX + sx)) * 4;
+            
+            const r = sData[idx];
+            const g = sData[idx + 1];
+            const b = sData[idx + 2];
+            const a = sData[idx + 3];
+            
+            // Ignore fully transparent pixels
+            if (a < 10) continue;
+            
+            // Calculate brightness (0-255)
+            const brightness = (r + g + b) / 3;
+            
+            // Weight function: (255 - brightness + 1)^3
+            // This drastically favors dark pixels.
+            // White (255) -> 1^3 = 1
+            // Black (0)   -> 256^3 = 16,777,216
+            // 50% Gray (128) -> 128^3 = 2,097,152
+            // A black pixel is ~8x more important than a gray one
+            const weight = Math.pow(255 - brightness + 1, 3);
+            
+            accR += r * weight;
+            accG += g * weight;
+            accB += b * weight;
+            totalWeight += weight;
+          }
+        }
+        
+        const destIdx = (y * destW + x) * 4;
+        
+        if (totalWeight > 0) {
+          dData[destIdx] = accR / totalWeight;
+          dData[destIdx + 1] = accG / totalWeight;
+          dData[destIdx + 2] = accB / totalWeight;
+          dData[destIdx + 3] = 255; // Alpha
+        } else {
+          // If no pixels contributed (e.g. all transparent), make it white/transparent
+          dData[destIdx] = 255;
+          dData[destIdx + 1] = 255;
+          dData[destIdx + 2] = 255;
+          dData[destIdx + 3] = 0;
+        }
+      }
+    }
+    
+    return dest;
   }
 
   /**
