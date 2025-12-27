@@ -13,6 +13,7 @@ export interface ThresholdConfig {
 export interface ConfigState {
   namePromptTemplate: string;
   imagePromptTemplate: string;
+  cameraPromptTemplate: string;
   thresholds: ThresholdConfig;
 }
 
@@ -28,6 +29,10 @@ The name should be:
 Reply with ONLY the name, nothing else.`;
 
 const DEFAULT_IMAGE_PROMPT = `A simple 2-bit grayscale front battle sprite for a Pokemon Red/Blue {type}-type Pokemon named {name}. No text, white background. Low detail, low resolution (56x56).`;
+
+const DEFAULT_CAMERA_PROMPT = `Transform this photo into a simple 2-bit grayscale Pokemon Red/Blue front battle sprite.
+The sprite should be 56x56 pixels, low detail, white background, no text.
+Capture the essence and mood of the subject as a {type}-type Pokemon named {name}.`;
 
 const DEFAULT_THRESHOLDS: ThresholdConfig = {
   black: 96,
@@ -46,6 +51,7 @@ class ConfigServiceClass {
     this.state = {
       namePromptTemplate: DEFAULT_NAME_PROMPT,
       imagePromptTemplate: DEFAULT_IMAGE_PROMPT,
+      cameraPromptTemplate: DEFAULT_CAMERA_PROMPT,
       thresholds: { ...DEFAULT_THRESHOLDS },
     };
   }
@@ -74,6 +80,15 @@ class ConfigServiceClass {
   }
 
   /**
+   * Get the camera transformation prompt with placeholders replaced
+   */
+  getCameraPrompt(name: string, type: string): string {
+    return this.state.cameraPromptTemplate
+      .replace(/\{name\}/g, name)
+      .replace(/\{type\}/g, type);
+  }
+
+  /**
    * Get current thresholds
    */
   getThresholds(): Readonly<ThresholdConfig> {
@@ -93,6 +108,14 @@ class ConfigServiceClass {
    */
   setImagePromptTemplate(template: string): void {
     this.state.imagePromptTemplate = template;
+    this.notifyListeners();
+  }
+
+  /**
+   * Update camera prompt template
+   */
+  setCameraPromptTemplate(template: string): void {
+    this.state.cameraPromptTemplate = template;
     this.notifyListeners();
   }
 
@@ -119,6 +142,13 @@ class ConfigServiceClass {
   }
 
   /**
+   * Get the default camera prompt template
+   */
+  getDefaultCameraPrompt(): string {
+    return DEFAULT_CAMERA_PROMPT;
+  }
+
+  /**
    * Reset name prompt to default
    */
   resetNamePrompt(): string {
@@ -137,12 +167,22 @@ class ConfigServiceClass {
   }
 
   /**
+   * Reset camera prompt to default
+   */
+  resetCameraPrompt(): string {
+    this.state.cameraPromptTemplate = DEFAULT_CAMERA_PROMPT;
+    this.notifyListeners();
+    return DEFAULT_CAMERA_PROMPT;
+  }
+
+  /**
    * Reset to defaults
    */
   resetToDefaults(): void {
     this.state = {
       namePromptTemplate: DEFAULT_NAME_PROMPT,
       imagePromptTemplate: DEFAULT_IMAGE_PROMPT,
+      cameraPromptTemplate: DEFAULT_CAMERA_PROMPT,
       thresholds: { ...DEFAULT_THRESHOLDS },
     };
     this.notifyListeners();

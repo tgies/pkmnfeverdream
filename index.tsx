@@ -8,6 +8,7 @@ import { PokemonGenerationService, type GeneratedPokemon } from './services/Poke
 import { getTypeName } from './services/gemini';
 import { ConfigService } from './services/ConfigService';
 import { SpriteEncoder } from './graphics/SpriteEncoder';
+import { cameraService } from './services/CameraService';
 
 // Global emulator stub required by binjgb when compiled with RGBDS_LIVE
 // The C code calls EM_ASM({emulator.serialCallback($0);}, value) for serial debugging
@@ -40,6 +41,21 @@ const regenerateBtnEl = document.getElementById('regenerate-btn') as HTMLButtonE
 const resetNamePromptEl = document.getElementById('reset-name-prompt') as HTMLButtonElement;
 const resetImagePromptEl = document.getElementById('reset-image-prompt') as HTMLButtonElement;
 
+// Camera Mode DOM elements
+const gameContainerEl = document.getElementById('game-container')!;
+const infoPanelEl = document.getElementById('info-panel')!;
+const cameraPreviewEl = document.getElementById('camera-preview') as HTMLVideoElement;
+const photoPreviewEl = document.getElementById('photo-preview') as HTMLImageElement;
+const cameraModeBtn = document.getElementById('camera-mode-btn') as HTMLButtonElement;
+const shutterBtn = document.getElementById('shutter-btn') as HTMLButtonElement;
+const retakeBtn = document.getElementById('retake-btn') as HTMLButtonElement;
+const usePhotoBtn = document.getElementById('use-photo-btn') as HTMLButtonElement;
+const cameraPromptEl = document.getElementById('camera-prompt') as HTMLTextAreaElement;
+const cameraPromptInlineEl = document.getElementById('camera-prompt-inline') as HTMLTextAreaElement;
+const resetCameraPromptEl = document.getElementById('reset-camera-prompt') as HTMLButtonElement;
+const clearCameraSourceEl = document.getElementById('clear-camera-source') as HTMLButtonElement;
+const flipCameraBtn = document.getElementById('flip-camera-btn') as HTMLButtonElement;
+
 // Application state
 let emulator: EmulatorWrapper | null = null;
 let battleController: BattleController | null = null;
@@ -68,6 +84,11 @@ let gameBooted = false;
 let firstPokemon: GeneratedPokemon | null = null;
 let generationComplete = false;
 let injectionDone = false;
+
+// Camera mode state
+let cameraMode = false;
+let capturedPhotoDataUrl: string | null = null;
+let cameraSourceActive = false; // Whether we're using camera photo for generation
 
 /**
  * Update the status display
@@ -404,6 +425,195 @@ function setupSettings(): void {
 }
 
 /**
+ * Enter camera mode - show camera preview, hide emulator
+ */
+async function enterCameraMode(): Promise<void> {
+  if (cameraMode) return;
+  
+  if (!cameraService.isAvailable()) {
+    updateStatus('❌ Camera not available');
+    return;
+  }
+  
+  try {
+    await cameraService.startCamera(cameraPreviewEl);
+    cameraMode = true;
+    gameContainerEl.classList.add('camera-mode');
+    cameraModeBtn.classList.add('active');
+    capturedPhotoDataUrl = null;
+    gameContainerEl.classList.remove('photo-captured');
+    updateStatus('📷 Camera mode - Take a photo!');
+  } catch (error) {
+    console.error('Failed to start camera:', error);
+    updateStatus('❌ Failed to access camera');
+  }
+}
+
+/**
+ * Exit camera mode - hide camera, show emulator
+ */
+function exitCameraMode(): void {
+  if (!cameraMode) return;
+  
+  cameraService.stopCamera();
+  cameraMode = false;
+  gameContainerEl.classList.remove('camera-mode', 'photo-captured');
+  cameraModeBtn.classList.remove('active');
+  capturedPhotoDataUrl = null;
+  
+  if (injectionDone && battleController) {
+    const pokemon = battleController.getCurrentPokemon();
+    if (pokemon) {
+      updateStatus(`✅ Back to game! Next: ${pokemon.name} (Lv.${pokemon.level})`);
+    }
+  }
+}
+
+/**
+ * Capture photo from camera
+ */
+function capturePhoto(): void {
+  if (!cameraMode) return;
+  
+  const photoData = cameraService.captureSquareFrame();
+  if (!photoData) {
+    updateStatus('❌ Failed to capture photo');
+    return;
+  }
+  
+  capturedPhotoDataUrl = photoData;
+  photoPreviewEl.src = photoData;
+  gameContainerEl.classList.add('photo-captured');
+  updateStatus('📸 Photo captured! Use it or retake.');
+}
+
+/**
+ * Activate camera source for sprite generation
+ */
+async function activateCameraSource(): Promise<void> {
+  if (!capturedPhotoDataUrl) return;
+  
+  cameraSourceActive = true;
+  document.body.classList.add('camera-source-active');
+  infoPanelEl.classList.add('camera-source-active');
+  
+  // Store the photo for the generation service
+  if (generationService) {
+    generationService.setCameraSource(capturedPhotoDataUrl);
+    // Throw out any queued Pokemon - we want fresh photo-based ones!
+    generationService.invalidateQueue();
+  }
+  
+  // Exit camera mode and return to game
+  exitCameraMode();
+  
+  // Immediately generate a new Pokemon from the photo
+  if (generationService && battleController) {
+    updateStatus('📷 Generating Pokemon from your photo...');
+    setGenerationOverlay(true);
+    
+    try {
+      const pokemon = await generationService.getNext();
+      battleController.injectGeneratedPokemon(pokemon);
+      onPokemonGenerated(pokemon);
+      setGenerationOverlay(false);
+      updateStatus(`📷 Ready! Next: ${pokemon.name} (Lv.${pokemon.level}) - from your photo!`);
+    } catch (error) {
+      console.error('Failed to generate from photo:', error);
+      updateStatus('❌ Failed to generate from photo');
+      setGenerationOverlay(false);
+    }
+  } else {
+    updateStatus('📷 Camera source active! Next Pokemon will be from your photo.');
+  }
+}
+
+/**
+ * Deactivate camera source, return to normal generation
+ */
+function deactivateCameraSource(): void {
+  cameraSourceActive = false;
+  document.body.classList.remove('camera-source-active');
+  infoPanelEl.classList.remove('camera-source-active');
+  
+  if (generationService) {
+    generationService.clearCameraSource();
+    generationService.invalidateQueue();
+  }
+  
+  updateStatus('🎨 Normal generation mode restored');
+}
+
+/**
+ * Set up camera mode interactions
+ */
+function setupCameraMode(): void {
+  // Initialize camera prompts from ConfigService
+  const config = ConfigService.getState();
+  cameraPromptEl.value = config.cameraPromptTemplate;
+  cameraPromptInlineEl.value = config.cameraPromptTemplate;
+  
+  // Camera mode toggle button
+  cameraModeBtn.addEventListener('click', () => {
+    if (cameraMode) {
+      exitCameraMode();
+    } else {
+      enterCameraMode();
+    }
+  });
+  
+  // Shutter button
+  shutterBtn.addEventListener('click', capturePhoto);
+  
+  // Flip camera button (front/back toggle)
+  flipCameraBtn.addEventListener('click', async () => {
+    try {
+      await cameraService.flipCamera();
+      const mode = cameraService.getFacingMode();
+      updateStatus(`📷 Switched to ${mode === 'user' ? 'front' : 'back'} camera`);
+    } catch (error) {
+      console.error('Failed to flip camera:', error);
+      updateStatus('❌ Failed to switch camera');
+    }
+  });
+  
+  // Retake button
+  retakeBtn.addEventListener('click', () => {
+    capturedPhotoDataUrl = null;
+    gameContainerEl.classList.remove('photo-captured');
+    photoPreviewEl.src = '';
+    updateStatus('📷 Camera mode - Take a photo!');
+  });
+  
+  // Use photo button
+  usePhotoBtn.addEventListener('click', activateCameraSource);
+  
+  // Inline camera prompt changes (syncs to ConfigService and the other textarea)
+  cameraPromptInlineEl.addEventListener('input', () => {
+    ConfigService.setCameraPromptTemplate(cameraPromptInlineEl.value);
+    cameraPromptEl.value = cameraPromptInlineEl.value;
+  });
+  
+  // Settings pane camera prompt changes (syncs to inline prompt)
+  cameraPromptEl.addEventListener('blur', () => {
+    ConfigService.setCameraPromptTemplate(cameraPromptEl.value);
+    cameraPromptInlineEl.value = cameraPromptEl.value;
+    console.log('📝 Camera prompt template updated');
+  });
+  
+  // Reset camera prompt (updates both textareas)
+  resetCameraPromptEl.addEventListener('click', () => {
+    const defaultPrompt = ConfigService.resetCameraPrompt();
+    cameraPromptEl.value = defaultPrompt;
+    cameraPromptInlineEl.value = defaultPrompt;
+    console.log('↺ Camera prompt reset to default');
+  });
+  
+  // Clear camera source button
+  clearCameraSourceEl.addEventListener('click', deactivateCameraSource);
+}
+
+/**
  * Handle battle controller events
  */
 function onBattleStateChange(state: BattleState): void {
@@ -521,6 +731,7 @@ async function init(): Promise<void> {
     // Set up input
     setupKeyboardInput();
     setupMobileControls();
+    setupCameraMode();
     
     // Show overlay while booting + generating
     setGenerationOverlay(true);

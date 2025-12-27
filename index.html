@@ -140,6 +140,272 @@
       background: #080808;
     }
 
+    /* Camera Mode */
+    #camera-preview {
+      display: none;
+      width: 640px;
+      height: 576px;
+      object-fit: cover;
+      background: #080808;
+    }
+
+    #photo-preview {
+      display: none;
+      width: 640px;
+      height: 576px;
+      object-fit: cover;
+      background: #080808;
+    }
+
+    .camera-mode #camera-preview {
+      display: block;
+    }
+
+    .camera-mode canvas#screen {
+      display: none;
+    }
+
+    .photo-captured #camera-preview {
+      display: none;
+    }
+
+    .photo-captured #photo-preview {
+      display: block;
+    }
+
+    #camera-mode-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: rgba(20, 20, 20, 0.85);
+      border: 1px solid #444;
+      color: #888;
+      font-size: 18px;
+      cursor: pointer;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s ease;
+    }
+
+    #camera-mode-btn:hover {
+      background: rgba(40, 40, 40, 0.9);
+      color: #aaa;
+      border-color: #555;
+    }
+
+    #camera-mode-btn.active {
+      background: rgba(80, 60, 20, 0.9);
+      border-color: #886622;
+      color: #ffcc44;
+    }
+
+    #camera-controls {
+      display: none;
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 20px;
+      background: linear-gradient(to top, rgba(0, 0, 0, 0.9) 0%, transparent 100%);
+      flex-direction: column;
+      align-items: center;
+      gap: 15px;
+      z-index: 15;
+    }
+
+    .camera-mode #camera-controls {
+      display: flex;
+    }
+
+    #shutter-btn {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: linear-gradient(145deg, #ff4444, #cc2222);
+      border: 4px solid #fff;
+      color: #fff;
+      font-size: 14px;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(255, 50, 50, 0.4);
+      transition: all 0.1s ease;
+    }
+
+    #shutter-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 6px 20px rgba(255, 50, 50, 0.5);
+    }
+
+    #shutter-btn:active {
+      transform: scale(0.95);
+    }
+
+    .photo-captured #shutter-btn {
+      display: none;
+    }
+
+    #flip-camera-btn {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: rgba(20, 20, 20, 0.85);
+      border: 1px solid #444;
+      color: #888;
+      font-size: 16px;
+      cursor: pointer;
+      z-index: 20;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s ease;
+    }
+
+    #flip-camera-btn:hover {
+      background: rgba(40, 40, 40, 0.9);
+      color: #aaa;
+    }
+
+    .camera-mode #flip-camera-btn {
+      display: flex;
+    }
+
+    .photo-captured #flip-camera-btn {
+      display: none;
+    }
+
+    .photo-action-btn {
+      padding: 12px 24px;
+      border-radius: 8px;
+      border: 1px solid #444;
+      font-family: inherit;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    #retake-btn {
+      background: rgba(40, 40, 40, 0.9);
+      color: #aaa;
+    }
+
+    #retake-btn:hover {
+      background: rgba(60, 60, 60, 0.9);
+      color: #fff;
+    }
+
+    #use-photo-btn {
+      background: linear-gradient(145deg, #44aa44, #228822);
+      border-color: #66cc66;
+      color: #fff;
+    }
+
+    #use-photo-btn:hover {
+      background: linear-gradient(145deg, #55bb55, #339933);
+    }
+
+    /* Inline camera prompt in photo actions */
+    #photo-actions {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      max-width: 320px;
+    }
+
+    .photo-captured #photo-actions {
+      display: flex;
+    }
+
+    #camera-prompt-inline {
+      width: 100%;
+      background: rgba(10, 10, 10, 0.9);
+      border: 1px solid #444;
+      border-radius: 6px;
+      color: #ccc;
+      font-family: inherit;
+      font-size: 12px;
+      padding: 10px;
+      resize: none;
+      min-height: 50px;
+    }
+
+    #camera-prompt-inline:focus {
+      outline: none;
+      border-color: #666;
+      color: #fff;
+    }
+
+    .photo-action-buttons {
+      display: flex;
+      gap: 15px;
+    }
+
+    #camera-prompt-section {
+      display: none;
+      width: 100%;
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .camera-source-active #camera-prompt-section {
+      display: block;
+    }
+
+    #camera-prompt-section .settings-label {
+      margin-bottom: 6px;
+    }
+
+    #camera-prompt-section textarea {
+      width: 100%;
+      background: #0a0a0a;
+      border: 1px solid #222;
+      color: #888;
+      font-family: inherit;
+      font-size: 11px;
+      padding: 8px;
+      resize: vertical;
+      min-height: 60px;
+    }
+
+    #camera-prompt-section textarea:focus {
+      outline: none;
+      border-color: #444;
+      color: #aaa;
+    }
+
+    /* Camera source indicator */
+    .camera-source-active #raw-image {
+      border: 2px solid #886622;
+    }
+
+    #camera-source-badge {
+      display: none;
+      position: absolute;
+      top: 5px;
+      left: 5px;
+      background: rgba(136, 102, 34, 0.9);
+      color: #ffcc44;
+      font-size: 9px;
+      padding: 2px 6px;
+      border-radius: 3px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .camera-source-active #camera-source-badge {
+      display: block;
+    }
+
     .controls-hint {
       font-size: 11px;
       color: #666;
@@ -282,6 +548,13 @@
       canvas#screen {
         width: 100%;
         height: auto;
+      }
+
+      #camera-preview,
+      #photo-preview {
+        width: 100%;
+        height: auto;
+        max-width: 100%;
       }
 
       .pane,
@@ -869,7 +1142,7 @@
 </head>
 
 <body>
-  <h1>pokemon_feverdream</h1>
+  <h1>pokemon_feverdream v2.1</h1>
 
   <div class="main-container">
     <!-- Explanation Pane -->
@@ -931,6 +1204,20 @@
     <div id="game-wrapper">
       <div id="game-container">
         <canvas id="screen" width="640" height="576"></canvas>
+        <video id="camera-preview" autoplay playsinline></video>
+        <img id="photo-preview" alt="captured photo" />
+        <button id="camera-mode-btn" title="Game Boy Camera">📷</button>
+        <button id="flip-camera-btn" title="Flip Camera">🔄</button>
+        <div id="camera-controls">
+          <button id="shutter-btn">📸</button>
+          <div id="photo-actions">
+            <textarea id="camera-prompt-inline" rows="2" placeholder="Transform prompt..."></textarea>
+            <div class="photo-action-buttons">
+              <button id="retake-btn" class="photo-action-btn">Retake</button>
+              <button id="use-photo-btn" class="photo-action-btn">Use Photo</button>
+            </div>
+          </div>
+        </div>
         <div id="generation-overlay">
           <div class="dreaming-text">dreaming...</div>
         </div>
@@ -971,7 +1258,8 @@
 
     <!-- Info Pane -->
     <div id="info-panel" class="pane">
-      <div class="image-preview">
+      <div class="image-preview" style="position: relative;">
+        <span id="camera-source-badge">📷 Camera</span>
         <img id="raw-image" alt="generated_sprite" />
       </div>
       <div id="pokemon-info">
@@ -1033,6 +1321,17 @@
           </div>
           <button id="regenerate-btn" class="settings-btn">🔄 Regenerate Now</button>
         </div>
+      </div>
+
+      <!-- Camera Prompt Section (visible when camera source active) -->
+      <div id="camera-prompt-section">
+        <div class="settings-header">
+          <label class="settings-label">📷 Camera Transformation Prompt</label>
+          <button class="reset-btn" id="reset-camera-prompt" title="Reset to default">↺</button>
+        </div>
+        <textarea id="camera-prompt" rows="4"
+          placeholder="Describe how to transform the photo into a sprite..."></textarea>
+        <button id="clear-camera-source" class="settings-btn" style="margin-top: 10px;">✕ Stop Using Photo</button>
       </div>
     </div>
   </div>

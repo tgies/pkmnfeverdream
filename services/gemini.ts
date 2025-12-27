@@ -166,3 +166,68 @@ export function getRandomTypeId(): number {
   const typeIds = Object.keys(TYPE_NAMES).map(Number);
   return typeIds[Math.floor(Math.random() * typeIds.length)];
 }
+
+/**
+ * Transforms a photo into a Pokemon sprite using Gemini's multimodal capabilities.
+ * Takes an input photo and a prompt describing the transformation.
+ * Returns a base64 data URL of the generated sprite.
+ */
+export async function transformPhotoToSprite(
+  photoDataUrl: string,
+  prompt: string
+): Promise<string> {
+  if (!ai) {
+    throw new Error('Gemini API not available');
+  }
+
+  try {
+    // Extract base64 data and mime type from data URL
+    const matches = photoDataUrl.match(/^data:([^;]+);base64,(.+)$/);
+    if (!matches) {
+      throw new Error('Invalid photo data URL format');
+    }
+    const mimeType = matches[1];
+    const base64Data = matches[2];
+
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash-image',
+      contents: [
+        {
+          role: 'user',
+          parts: [
+            {
+              inlineData: {
+                mimeType: mimeType,
+                data: base64Data,
+              },
+            },
+            {
+              text: prompt,
+            },
+          ],
+        },
+      ],
+      config: {
+        imageConfig: {
+          aspectRatio: "1:1",
+        },
+      },
+    });
+
+    // Extract image from response
+    const parts = response.candidates?.[0]?.content?.parts;
+
+    if (parts) {
+      for (const part of parts as any[]) {
+        if (part.inlineData && part.inlineData.data) {
+          return `data:${part.inlineData.mimeType || 'image/png'};base64,${part.inlineData.data}`;
+        }
+      }
+    }
+
+    throw new Error("No image data found in response.");
+  } catch (error) {
+    console.error("Photo transformation error:", error);
+    throw error;
+  }
+}

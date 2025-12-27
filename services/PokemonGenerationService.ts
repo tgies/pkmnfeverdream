@@ -6,11 +6,13 @@
 import { 
   isApiAvailable, 
   generatePokemonName, 
-  generateSpriteImage, 
+  generateSpriteImage,
+  transformPhotoToSprite,
   generateRandomStats,
   getRandomTypeId,
   getTypeName 
 } from './gemini';
+import { ConfigService } from './ConfigService';
 import { generateMockPokemon, mockGenerateImage } from '../mocks/MockGeminiService';
 import { encodeString } from '../emulator/MemoryMap';
 import { SpriteEncoder } from '../graphics/SpriteEncoder';
@@ -72,6 +74,9 @@ export class PokemonGenerationService {
   private defaultLevel: number = 10;
   private onStateChange?: (change: GenerationStateChange) => void;
   
+  // Camera source for photo-based generation
+  private cameraSourceDataUrl: string | null = null;
+  
   constructor(options?: { 
     defaultLevel?: number;
     onStateChange?: (change: GenerationStateChange) => void;
@@ -111,6 +116,29 @@ export class PokemonGenerationService {
     this.queue = [];
     // Note: if generation is in progress, it will complete but the result
     // may use old settings. The caller should trigger a new generation after.
+  }
+  
+  /**
+   * Set camera source for photo-based generation
+   */
+  setCameraSource(photoDataUrl: string): void {
+    this.cameraSourceDataUrl = photoDataUrl;
+    console.log('📷 Camera source set for generation');
+  }
+  
+  /**
+   * Clear camera source, return to normal generation
+   */
+  clearCameraSource(): void {
+    this.cameraSourceDataUrl = null;
+    console.log('📷 Camera source cleared');
+  }
+  
+  /**
+   * Check if camera source is active
+   */
+  hasCameraSource(): boolean {
+    return this.cameraSourceDataUrl !== null;
   }
   
   /**
@@ -235,8 +263,15 @@ export class PokemonGenerationService {
     const name = await generatePokemonName(typeName);
     console.log(`📛 Generated name: ${name}`);
     
-    // Generate sprite image
-    const spriteDataUrl = await generateSpriteImage(name, typeName);
+    // Generate sprite image - use camera source if available
+    let spriteDataUrl: string;
+    if (this.cameraSourceDataUrl) {
+      console.log('📷 Using camera source for sprite generation');
+      const prompt = ConfigService.getCameraPrompt(name, typeName);
+      spriteDataUrl = await transformPhotoToSprite(this.cameraSourceDataUrl, prompt);
+    } else {
+      spriteDataUrl = await generateSpriteImage(name, typeName);
+    }
     console.log(`🎨 Generated sprite image`);
     
     // Convert sprite to 2bpp
