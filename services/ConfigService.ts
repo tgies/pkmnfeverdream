@@ -38,7 +38,7 @@ Capture the essence and mood of the subject as a {type}-type Pokemon named {name
 const DEFAULT_THRESHOLDS: ThresholdConfig = {
   black: 64,
   darkGray: 128,
-  lightGray: 224,
+  lightGray: 240,
 };
 
 const DEFAULT_NAME_TEMPERATURE = 1.5;
