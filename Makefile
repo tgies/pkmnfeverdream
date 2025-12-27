@@ -14,15 +14,21 @@ SCRIPT_DIR := $(shell pwd)
 
 all: dist
 
+# Alias for building the ROM
+rom: pokered.gbc
+
 # Build the ROM using the same Docker command as build-rom.sh
-rom:
-	@echo "Building Pokemon Red ROM with Docker RGBDS..."
-	cd vendor/pokered && make -j$$(nproc) RGBDS="docker run --rm -v $$(pwd):/work -w /work ghcr.io/gbdev/rgbds:v1.0.0 "
+# This target only rebuilds if pokered.gbc is missing or vendor/pokered/pokered.gbc is newer
+pokered.gbc: vendor/pokered/pokered.gbc
 	cp vendor/pokered/pokered.gbc .
 	@echo "Done! Output in pokered.gbc"
 
+vendor/pokered/pokered.gbc:
+	@echo "Building Pokemon Red ROM with Docker RGBDS..."
+	cd vendor/pokered && make -j$$(nproc) RGBDS="docker run --rm -v $$(pwd):/work -w /work ghcr.io/gbdev/rgbds:v1.0.0 "
+
 # Create the distribution package
-dist: rom
+dist: pokered.gbc
 	@echo "Creating distribution package..."
 	# Clean previous build artifacts and old zip packages
 	rm -rf $(DIST_DIR)
