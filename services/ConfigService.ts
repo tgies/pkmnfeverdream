@@ -40,7 +40,7 @@ const DEFAULT_THRESHOLDS: ThresholdConfig = {
   lightGray: 224,
 };
 
-const DEFAULT_NAME_TEMPERATURE = 1.1;
+const DEFAULT_NAME_TEMPERATURE = 1.5;
 
 /**
  * Singleton configuration service
