@@ -134,7 +134,14 @@ export class PokemonGenerationService {
     }
     
     // Otherwise generate now
-    return this.generateOne();
+    const pokemon = await this.generateOne();
+    // generateOne() pushes to queue, but since we're returning directly,
+    // we need to remove it from queue to avoid double-consumption
+    const idx = this.queue.indexOf(pokemon);
+    if (idx >= 0) {
+      this.queue.splice(idx, 1);
+    }
+    return pokemon;
   }
   
   /**
