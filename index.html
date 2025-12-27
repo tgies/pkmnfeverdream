@@ -1386,6 +1386,16 @@
     finagled by <a href="https://x.com/me_irl" target="_blank" rel="noopener">@me_irl</a>
   </footer>
   <script>
+    // Prevent arrow keys from scrolling the page (they're used for emulator controls)
+    window.addEventListener('keydown', (e) => {
+      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+        // Allow arrow keys in input fields and textareas
+        if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+          e.preventDefault();
+        }
+      }
+    });
+
     // Drawer toggle functionality for mobile
     document.addEventListener('DOMContentLoaded', () => {
       // Handle all drawer toggles
