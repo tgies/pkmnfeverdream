@@ -239,6 +239,36 @@
       color: #ffcc44;
     }
 
+    /* Detach photo button - appears next to camera button when photo is attached */
+    #detach-photo-btn {
+      position: absolute;
+      top: 10px;
+      right: 56px;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: rgba(120, 40, 40, 0.9);
+      border: 1px solid #884444;
+      color: #ffaaaa;
+      font-size: 14px;
+      cursor: pointer;
+      z-index: 20;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s ease;
+    }
+
+    #detach-photo-btn:hover {
+      background: rgba(150, 50, 50, 0.95);
+      color: #fff;
+      border-color: #aa5555;
+    }
+
+    .camera-source-active #detach-photo-btn {
+      display: flex;
+    }
+
     #camera-controls {
       display: none;
       position: absolute;
@@ -384,39 +414,7 @@
       gap: 15px;
     }
 
-    #camera-prompt-section {
-      display: none;
-      width: 100%;
-      margin-top: 1rem;
-      padding-top: 1rem;
-      border-top: 1px solid var(--border);
-    }
-
-    .camera-source-active #camera-prompt-section {
-      display: block;
-    }
-
-    #camera-prompt-section .settings-label {
-      margin-bottom: 6px;
-    }
-
-    #camera-prompt-section textarea {
-      width: 100%;
-      background: #0a0a0a;
-      border: 1px solid #222;
-      color: #888;
-      font-family: inherit;
-      font-size: 11px;
-      padding: 8px;
-      resize: vertical;
-      min-height: 60px;
-    }
-
-    #camera-prompt-section textarea:focus {
-      outline: none;
-      border-color: #444;
-      color: #aaa;
-    }
+    /* Camera prompt section removed - now using inline prompt in camera mode only */
 
     /* Camera source indicator */
     .camera-source-active #raw-image {
@@ -1262,6 +1260,7 @@
         <video id="camera-preview" autoplay playsinline></video>
         <img id="photo-preview" alt="captured photo" />
         <button id="camera-mode-btn" title="Game Boy Camera">📷</button>
+        <button id="detach-photo-btn" title="Stop Using Photo">✕</button>
         <button id="flip-camera-btn" title="Flip Camera">🔄</button>
         <div id="camera-controls">
           <button id="shutter-btn">📸</button>
@@ -1388,16 +1387,7 @@
         </div>
       </div>
 
-      <!-- Camera Prompt Section (visible when camera source active) -->
-      <div id="camera-prompt-section">
-        <div class="settings-header">
-          <label class="settings-label">📷 Camera</label>
-          <button class="reset-btn" id="reset-camera-prompt" title="Reset to default">↺</button>
-        </div>
-        <textarea id="camera-prompt" rows="4"
-          placeholder="Describe how to transform the photo into a sprite..."></textarea>
-        <button id="clear-camera-source" class="settings-btn" style="margin-top: 10px;">✕ Stop Using Photo</button>
-      </div>
+      <!-- Camera Prompt Section removed - prompt editing now only in camera capture mode -->
     </div>
   </div>
 

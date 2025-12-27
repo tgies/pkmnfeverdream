@@ -53,10 +53,8 @@ const cameraModeBtn = document.getElementById('camera-mode-btn') as HTMLButtonEl
 const shutterBtn = document.getElementById('shutter-btn') as HTMLButtonElement;
 const retakeBtn = document.getElementById('retake-btn') as HTMLButtonElement;
 const usePhotoBtn = document.getElementById('use-photo-btn') as HTMLButtonElement;
-const cameraPromptEl = document.getElementById('camera-prompt') as HTMLTextAreaElement;
 const cameraPromptInlineEl = document.getElementById('camera-prompt-inline') as HTMLTextAreaElement;
-const resetCameraPromptEl = document.getElementById('reset-camera-prompt') as HTMLButtonElement;
-const clearCameraSourceEl = document.getElementById('clear-camera-source') as HTMLButtonElement;
+const detachPhotoBtnEl = document.getElementById('detach-photo-btn') as HTMLButtonElement;
 const flipCameraBtn = document.getElementById('flip-camera-btn') as HTMLButtonElement;
 
 // Application state
@@ -574,9 +572,8 @@ function deactivateCameraSource(): void {
  * Set up camera mode interactions
  */
 function setupCameraMode(): void {
-  // Initialize camera prompts from ConfigService
+  // Initialize camera prompt from ConfigService
   const config = ConfigService.getState();
-  cameraPromptEl.value = config.cameraPromptTemplate;
   cameraPromptInlineEl.value = config.cameraPromptTemplate;
   
   // Camera mode toggle button
@@ -618,29 +615,13 @@ function setupCameraMode(): void {
   // Use photo button
   usePhotoBtn.addEventListener('click', activateCameraSource);
   
-  // Inline camera prompt changes (syncs to ConfigService and the other textarea)
+  // Inline camera prompt changes (syncs to ConfigService)
   cameraPromptInlineEl.addEventListener('input', () => {
     ConfigService.setCameraPromptTemplate(cameraPromptInlineEl.value);
-    cameraPromptEl.value = cameraPromptInlineEl.value;
   });
   
-  // Settings pane camera prompt changes (syncs to inline prompt)
-  cameraPromptEl.addEventListener('blur', () => {
-    ConfigService.setCameraPromptTemplate(cameraPromptEl.value);
-    cameraPromptInlineEl.value = cameraPromptEl.value;
-    console.log('📝 Camera prompt template updated');
-  });
-  
-  // Reset camera prompt (updates both textareas)
-  resetCameraPromptEl.addEventListener('click', () => {
-    const defaultPrompt = ConfigService.resetCameraPrompt();
-    cameraPromptEl.value = defaultPrompt;
-    cameraPromptInlineEl.value = defaultPrompt;
-    console.log('↺ Camera prompt reset to default');
-  });
-  
-  // Clear camera source button
-  clearCameraSourceEl.addEventListener('click', deactivateCameraSource);
+  // Detach photo button (X button next to camera icon)
+  detachPhotoBtnEl.addEventListener('click', deactivateCameraSource);
 }
 
 /**
