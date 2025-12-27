@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pokemon_feverdream</title>
+    <style>
+      :root {
+        --bg: #050505;
+        --fg: #b0b0b0;
+        --dim: #555;
+        --border: #222;
+      }
+      
+      * {
+        box-sizing: border-box;
+      }
+      
+      body {
+        margin: 0;
+        padding: 4rem 2rem;
+        background: var(--bg);
+        color: var(--fg);
+        font-family: "Courier New", Courier, monospace;
+        font-size: 13px;
+        line-height: 1.5;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-height: 100vh;
+      }
+
+      h1 {
+        font-size: 14px;
+        font-weight: normal;
+        letter-spacing: 0.5em;
+        margin-bottom: 4rem;
+        color: #fff;
+        text-transform: lowercase;
+        opacity: 0.8;
+      }
+      
+      .main-container {
+        display: flex;
+        flex-direction: row;
+        align-items: flex-start;
+        justify-content: center;
+        gap: 3rem;
+        flex-wrap: wrap;
+        width: 100%;
+        max-width: 1600px;
+      }
+
+      .pane {
+        width: 300px;
+        padding-top: 10px;
+      }
+      
+      /* Left Pane: Explanation */
+      #explanation-pane {
+        border-top: 1px solid var(--border);
+        color: #888;
+        font-size: 12px;
+        text-align: justify;
+      }
+      
+      #explanation-pane p {
+        margin-bottom: 1.5rem;
+      }
+      
+      strong {
+        color: #aaa;
+        font-weight: normal;
+        text-decoration: underline;
+        text-decoration-thickness: 1px;
+        text-underline-offset: 3px;
+      }
+
+      /* Center Pane: Game */
+      #game-wrapper {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      #game-container {
+        position: relative;
+        border: 1px solid #1a1a1a;
+        padding: 4px;
+        background: #000;
+      }
+
+      canvas#screen {
+        display: block;
+        image-rendering: pixelated;
+        width: 640px;
+        height: 576px;
+        background: #080808;
+      }
+
+      .controls-hint {
+        font-size: 11px;
+        color: #666;
+        text-align: center;
+        font-family: monospace;
+        letter-spacing: 1px;
+      }
+      
+      #status {
+        font-size: 11px;
+        color: #444;
+        text-align: center;
+        font-family: monospace;
+        letter-spacing: 1px;
+      }
+
+      /* Right Pane: Info */
+      #info-panel {
+        border-top: 1px solid var(--border);
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+        align-items: center;
+      }
+
+      .image-preview {
+        width: 224px;
+        height: 224px;
+        border: 1px solid #111;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #020202;
+        margin-top: 1rem;
+      }
+
+      #raw-image {
+        width: 100%;
+        height: 100%;
+        image-rendering: pixelated;
+        display: none;
+        opacity: 0.9;
+      }
+      
+      #raw-image.loaded {
+        display: block;
+      }
+      
+      #pokemon-info {
+        width: 100%;
+        padding: 0 1rem;
+      }
+      
+      .info-row {
+        display: flex;
+        justify-content: space-between;
+        border-bottom: 1px solid #111;
+        padding-bottom: 6px;
+        margin-bottom: 10px;
+        font-size: 12px;
+      }
+      
+      .info-label {
+        color: #555;
+        text-transform: uppercase;
+        font-size: 10px;
+        letter-spacing: 1px;
+      }
+
+      /* Overlay */
+      #generation-overlay {
+        position: absolute;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0,0,0,0.95);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10;
+        transition: opacity 0.5s ease;
+      }
+      
+      #generation-overlay.hidden {
+        opacity: 0;
+        pointer-events: none;
+      }
+      
+      .dreaming-text {
+        color: #333;
+        font-size: 12px;
+        letter-spacing: 4px;
+        animation: breathe 3s infinite ease-in-out;
+      }
+      
+      @keyframes breathe {
+        0%, 100% { color: #333; }
+        50% { color: #666; }
+      }
+
+      /* Mobile layout adjustments */
+      @media (max-width: 1300px) {
+        .main-container {
+          flex-direction: column;
+          align-items: center;
+          gap: 4rem;
+        }
+        
+        .pane {
+          width: 640px;
+          max-width: 100%;
+          border-top: none;
+          border-left: 2px solid var(--border);
+          padding-left: 20px;
+        }
+        
+        #game-wrapper {
+            order: -1;
+        }
+        
+        #info-panel {
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+        .image-preview {
+            margin-top: 0;
+        }
+      }
+
+      @media (max-width: 700px) {
+        canvas#screen {
+            width: 100%;
+            height: auto;
+        }
+        .pane, #game-wrapper {
+            width: 100%;
+        }
+        #info-panel {
+            flex-direction: column;
+            align-items: center;
+        }
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "@google/genai": "https://esm.sh/@google/genai@^1.34.0"
+  }
+}
+</script>
+</head>
+  <body>
+    <h1>pokemon_feverdream</h1>
+    
+    <div class="main-container">
+      
+      <!-- Explanation Pane -->
+      <div id="explanation-pane" class="pane">
+        <p>This app generates Pokémon front sprites and names with Gemini models and then injects them into the running game's memory. A lightly patched ROM is used, exploiting some debug leftovers to boot directly into a battle.</p>
+        <p><strong>Instructions:</strong> Wait for generation. Click emulator to focus it. Press ENTER to pass the title screen, then use X and the arrow keys to navigate the nickname prompt. The battle should start.</p>
+        <p><strong>Known issues:</strong> Sometimes we inject data at the wrong time and end up with a mix of our generated data and Mew's original data (you'll see chunks of Mew's sprite mixed in, for instance). Also, if Gemini fails in some way, we end up using some placeholder data for a Pokemon called "FLAMORB". If either of those happen, refresh and try again. Sorry.</p>
+        <p>Also, this is supposed to keep generating new Pokemon and starting new fights forever. That's not working yet. Tedious synchronization issues are involved.</p>
+      </div>
+
+      <!-- Game Pane -->
+      <div id="game-wrapper">
+        <div id="game-container">
+          <canvas id="screen" width="640" height="576"></canvas>
+          <div id="generation-overlay">
+            <div class="dreaming-text">dreaming...</div>
+          </div>
+        </div>
+        <div class="controls-hint">click emulator to focus | Z/X: B/A | enter: start</div>
+        <div id="status">initializing...</div>
+      </div>
+      
+      <!-- Info Pane -->
+      <div id="info-panel" class="pane">
+        <div class="image-preview">
+          <img id="raw-image" alt="generated_sprite" />
+        </div>
+        <div id="pokemon-info">
+          <div style="text-align: center; font-style: italic; color: #333; margin-top: 2rem;">
+            waiting for signal...
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <script type="module" src="./index.tsx"></script>
+  </body>
+</html>
