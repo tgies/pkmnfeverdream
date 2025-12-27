@@ -255,7 +255,10 @@ export class PokemonGenerationService {
     // Pick random types
     const type1 = getRandomTypeId();
     const type2 = Math.random() > 0.5 ? getRandomTypeId() : type1;
-    const typeName = getTypeName(type1);
+    const type1Name = getTypeName(type1);
+    const type2Name = getTypeName(type2);
+    // For dual-type Pokemon, combine as "Type1/Type2"
+    const typeName = type1 !== type2 ? `${type1Name}/${type2Name}` : type1Name;
     
     console.log(`🤖 Generating AI Pokemon (${typeName}-type)...`);
     
