@@ -68,6 +68,16 @@
         margin-bottom: 1.5rem;
       }
 
+      /* Drawer toggle button - hidden on desktop */
+      .drawer-toggle {
+        display: none;
+      }
+
+      .drawer-content {
+        /* On desktop, the drawer content is always visible */
+        display: block;
+      }
+
       strong {
         color: #aaa;
         font-weight: normal;
@@ -216,9 +226,6 @@
         .pane {
           width: 640px;
           max-width: 100%;
-          border-top: none;
-          border-left: 2px solid var(--border);
-          padding-left: 20px;
         }
 
         #game-wrapper {
@@ -245,8 +252,22 @@
           width: 100%;
         }
         #info-panel {
-          flex-direction: column;
-          align-items: center;
+          flex-direction: row;
+          align-items: flex-start;
+          gap: 1rem;
+          border-top: none;
+          padding-top: 0;
+        }
+
+        .image-preview {
+          width: 100px;
+          height: 100px;
+          flex-shrink: 0;
+        }
+
+        #pokemon-info {
+          flex: 1;
+          padding: 0;
         }
         .controls-hint {
           display: none;
@@ -258,6 +279,107 @@
           font-size: 12px;
           margin-bottom: 1rem;
           letter-spacing: 0.3em;
+        }
+
+        /* Explanation pane - fixed corner toggle */
+        #explanation-pane {
+          position: fixed;
+          bottom: 190px;
+          right: 0.5rem;
+          width: auto;
+          border: none;
+          padding: 0;
+          z-index: 200;
+        }
+
+        .drawer-toggle {
+          display: flex;
+          align-items: center;
+          gap: 0.4em;
+          padding: 4px 8px;
+          background: rgba(20, 20, 20, 0.9);
+          border: 1px solid #333;
+          border-radius: 3px;
+          color: #666;
+          font-family: inherit;
+          font-size: 9px;
+          letter-spacing: 0.5px;
+          cursor: pointer;
+        }
+
+        .drawer-toggle:active {
+          background: rgba(30, 30, 30, 0.95);
+        }
+
+        .drawer-toggle .toggle-icon {
+          font-size: 7px;
+          transition: transform 0.2s ease;
+        }
+
+        .drawer-toggle[aria-expanded="true"] .toggle-icon {
+          transform: rotate(180deg);
+        }
+
+        .drawer-content {
+          position: absolute;
+          bottom: 100%;
+          right: 0;
+          width: 280px;
+          max-width: 85vw;
+          margin-bottom: 4px;
+          background: rgba(10, 10, 10, 0.97);
+          border: 1px solid #333;
+          border-radius: 3px;
+          max-height: 0;
+          overflow: hidden;
+          opacity: 0;
+          transition: max-height 0.3s ease, opacity 0.2s ease;
+        }
+
+        .drawer-content.expanded {
+          max-height: 60vh;
+          opacity: 1;
+          padding: 10px 12px;
+          overflow-y: auto;
+        }
+
+        .drawer-content p {
+          margin-bottom: 0.8rem;
+          font-size: 11px;
+          line-height: 1.5;
+        }
+
+        .drawer-content p:last-child {
+          margin-bottom: 0;
+        }
+
+        /* Slightly larger text on mobile (excluding control pad labels) */
+        body {
+          font-size: 16px;
+        }
+
+        h1 {
+          font-size: 13px;
+        }
+
+        .drawer-content p {
+          font-size: 14px;
+        }
+
+        .info-row {
+          font-size: 14px;
+        }
+
+        .info-label {
+          font-size: 11px;
+        }
+
+        #status {
+          font-size: 12px;
+        }
+
+        #pokemon-info {
+          font-size: 14px;
         }
       }
 
@@ -477,30 +599,34 @@
     <div class="main-container">
       <!-- Explanation Pane -->
       <div id="explanation-pane" class="pane">
-        <p>
-          This app generates Pokémon front sprites and names with Gemini models
-          and then injects them into the running game's memory. A lightly
-          patched ROM is used, exploiting some debug leftovers to boot directly
-          into a battle.
-        </p>
-        <p>
-          <strong>Instructions:</strong> Wait for generation. Click emulator to
-          focus it. Press ENTER to pass the title screen, then use X and the
-          arrow keys to navigate the nickname prompt. The battle should start.
-        </p>
-        <p>
-          <strong>Known issues:</strong> Sometimes we inject data at the wrong
-          time and end up with a mix of our generated data and Mew's original
-          data (you'll see chunks of Mew's sprite mixed in, for instance). Also,
-          if Gemini fails in some way, we end up using some placeholder data for
-          a Pokemon called "FLAMORB". If either of those happen, refresh and try
-          again. Sorry.
-        </p>
-        <p>
-          Also, this is supposed to keep generating new Pokemon and starting new
-          fights forever. That's not working yet. Tedious synchronization issues
-          are involved.
-        </p>
+        <button class="drawer-toggle" aria-expanded="false" aria-controls="explanation-content">
+          <span>What is this?</span>
+          <span class="toggle-icon">▲</span>
+        </button>
+        <div id="explanation-content" class="drawer-content">
+          <p>
+            This app generates Pokémon front sprites and names with Gemini models
+            and then injects them into the running game's memory. A lightly
+            patched ROM is used, exploiting some debug leftovers to boot directly
+            into a battle.
+          </p>
+          <p>
+            <strong>Instructions:</strong> Wait for generation. Click emulator to
+            focus it. Press ENTER to pass the title screen, then use X and the
+            arrow keys to navigate the nickname prompt. The battle should start.
+          </p>
+          <p>
+            <strong>Known issues:</strong> Sometimes we inject data at the wrong
+            time and end up with a mix of generated data and Mew's data (e.g.,
+            you'll see chunks of Mew's sprite mixed in). Also, if Gemini fails,
+            we use placeholder data for a Pokemon called "FLAMORB". If either of
+            those happen, refresh and try again. Sorry.
+          </p>
+          <p>
+            This is supposed to keep generating new Pokemon and starting new fights
+            forever. That's not working reliably. It might sometimes, though!
+          </p>
+        </div>
       </div>
 
       <!-- Game Pane -->
@@ -564,6 +690,21 @@
         </div>
       </div>
     </div>
+    <script>
+      // Drawer toggle functionality for mobile
+      document.addEventListener('DOMContentLoaded', () => {
+        const toggle = document.querySelector('.drawer-toggle');
+        const content = document.getElementById('explanation-content');
+        
+        if (toggle && content) {
+          toggle.addEventListener('click', () => {
+            const isExpanded = toggle.getAttribute('aria-expanded') === 'true';
+            toggle.setAttribute('aria-expanded', !isExpanded);
+            content.classList.toggle('expanded', !isExpanded);
+          });
+        }
+      });
+    </script>
     <script type="module" src="./index.tsx"></script>
   </body>
 </html>
