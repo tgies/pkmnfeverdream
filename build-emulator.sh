@@ -21,6 +21,10 @@ docker run --rm \
     emmake ninja
   "
 
+echo "Injecting emulator stub..."
+# Inject emulator stub into binjgb.js for RGBDS_LIVE serial callback support
+sed -i 's/=(()=>{var _scriptName/=(()=>{var emulator={serialCallback:function(){}};var _scriptName/' out/Wasm/binjgb.js
+
 echo "Done! Artifacts in vendor/binjgb/out/Wasm/"
 
 
