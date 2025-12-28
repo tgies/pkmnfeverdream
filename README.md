@@ -1,39 +1,55 @@
-# AI Pokemon Battles
+# pokemon_feverdream
 
-Infinite Pokemon battles with AI-generated Pokemon using Gemini, running in a Game Boy emulator.
+Battle infinite Pokemon, never know peace.
 
-## Features
+This app generates Pokemon front sprites and names with Gemini models, then injects them into the running game's memory so you can battle them.
 
-- 🎮 Full Pokemon Red running in browser via WebAssembly emulator
-- 🤖 AI-generated Pokemon names using Gemini 2.0 Flash
-- 🎨 AI-generated 56x56 grayscale sprites using Gemini Image Generation
-- 🔄 Pre-fetch queue generates next Pokemon during current battle
-- ⏳ Automatic pause overlay when generation is pending
+## instructions
 
-## Controls
+Wait for generation. Click game to focus input. ENTER at title, arrow keys, X to select.
 
-- **Arrow keys**: Move
-- **Z**: B button
-- **X**: A button
-- **Enter**: Start
-- **Right Shift**: Select
+## how does it work?
 
-## How It Works
+We use [binjgb](https://github.com/nickshanks/binjgb), an emulator that lets us read and write Game Boy memory at runtime.
 
-1. On startup, generates the first AI Pokemon
-2. When a battle starts, immediately begins generating the NEXT Pokemon
-3. After battle ends, uses pre-generated Pokemon if ready
-4. If generation is still pending, pauses game and shows overlay
-5. Repeat infinitely!
+We rely on [pokered](https://github.com/pret/pokered), a reconstruction of Pokemon Red source code. It reveals memory addresses for sprite data and names, plus helps us build a [modified ROM](https://github.com/tgies/pokered/tree/pkmnfeverdream) that boots straight to battle.
 
-## Files
+We set a breakpoint on the "load front sprite" function. When the game is about to execute it, we inject our sprite (converted to Game Boy format) and name, then skip the game's loading code.
 
-- `index.html` - Main HTML with import maps
-- `index.tsx` - Entry point
-- `services/gemini.ts` - Gemini API integration
-- `services/PokemonGenerationService.ts` - Pre-fetch queue
-- `emulator/` - Game Boy emulator wrapper
-- `battle/` - Battle detection and injection
-- `graphics/SpriteEncoder.ts` - PNG to 2bpp conversion
-- `binjgb.js` / `binjgb.wasm` - WebAssembly Game Boy emulator
-- `pokered.gbc` - Pokemon Red ROM
+## building
+
+We depend on:
+
+- [patched pokered](https://github.com/tgies/pokered/tree/pkmnfeverdream)
+- [binjgb](https://github.com/nickshanks/binjgb) built with `RGBDS_LIVE` to enable breakpoint support, and with a weird stub injected in `binjgb.js` to keep it happy outside of the intended rgbds live environment
+
+`make` (or `make rom`, `make emulator`) will build these, using Docker for the rgbds and emscripten build environments. If you'd rather use local tools, you can change the `Makefile` to use your local rgbds and emscripten.
+
+`build-rom.sh` and `build-emulator.sh` are nominally the same logic as the `Makefile` duplicated for absolutely no reason.
+
+`npm`/`vite` stuff should work, but it's not really maintained; we primarily target AI Studio.
+
+## deploying to ai studio
+
+This can run in Google AI Studio "Build" mode, taking advantage of free Gemini usage there. We need to package it specifically to work there.
+
+To create a suitable "empty" AI Studio project, just enter "write an absolutely minimal Hello World" as a prompt or something.
+
+To deploy:
+
+1. Run `make dist` _or_ `./package_dist.sh` (should do the same thing)
+2. This creates a timestamped zip file (e.g., `dist_20251227_120000.zip`)
+3. Upload this zip directly to AI Studio with the "Upload zip" option on an existing project.
+
+The script handles the necessary cleanup:
+
+- Strips `node_modules`, `.git`, and `vendor` source
+- Copies everything else "unbuilt" (AI Studio handles at runtime)
+- Includes the built `binjgb.{js,wasm}` and patched `pokered.gbc`
+- Includes `metadata.json` which is required to request camera permissions for the Game Boy Camera feature
+
+# todo
+
+- fix stats etc
+- move set injection
+- it's perhaps possible to do this without a patched ROM (runtime hot-patching)
