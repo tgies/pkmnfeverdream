@@ -3,22 +3,17 @@
 
 .PHONY: all rom emulator dist clean
 
-# Timestamp for the distribution package
 TIMESTAMP := $(shell date +%Y%m%d_%H%M%S)
 DIST_DIR := dist_tmp
 ZIP_FILE := dist_$(TIMESTAMP).zip
 SCRIPT_DIR := $(shell pwd)
-# For Windows compatibility if needed, though the scripts assume bash/unix tools
-# The user env is Windows but using bash scripts, so likely WSL or Git Bash.
-# We will use standard unix commands as per the shell scripts.
 
 all: dist
 
-# Alias for building the ROM
 rom: pokered.gbc
 
 # Build binjgb WASM with RGBDS_LIVE for breakpoint support
-# Build flags match .github/workflows/build.yml but add RGBDS_LIVE
+# Build flags match vendor/binjgb/.github/workflows/build.yml but add RGBDS_LIVE
 # Also add EXPORTED_RUNTIME_METHODS for HEAPU8/HEAPU32 (newer Emscripten doesn't export these by default)
 emulator:
 	@echo "Building binjgb with Emscripten (RGBDS_LIVE=ON for breakpoint support)..."
@@ -34,10 +29,6 @@ emulator:
 	sed -i 's/=(()=>{var _scriptName/=(()=>{var emulator={serialCallback:function(){}};var _scriptName/' vendor/binjgb/out/Wasm/binjgb.js
 	@echo "Done! Emulator built with breakpoint support in vendor/binjgb/out/Wasm/"
 
-
-
-
-# Build the ROM using the same Docker command as build-rom.sh
 # This target only rebuilds if pokered.gbc is missing or vendor/pokered/pokered.gbc is newer
 pokered.gbc: vendor/pokered/pokered.gbc
 	cp vendor/pokered/pokered.gbc .
@@ -47,7 +38,6 @@ vendor/pokered/pokered.gbc:
 	@echo "Building Pokemon Red ROM with Docker RGBDS..."
 	cd vendor/pokered && make -j$$(nproc) RGBDS="docker run --rm -v $$(pwd):/work -w /work ghcr.io/gbdev/rgbds:v1.0.0 "
 
-# Create the distribution package
 dist: pokered.gbc
 	@echo "Creating distribution package..."
 	# Clean previous build artifacts and old zip packages
@@ -78,9 +68,5 @@ clean:
 	rm -rf $(DIST_DIR)
 	rm -f dist_*.zip
 	rm -f pokered.gbc
-	
-	# Optional: Clean vendor/pokered if desired. 
-	# The original build-rom.sh didn't strictly clean it, but it's good practice.
-	# Commenting out to strictly match "remove build artifacts" of the repo itself first, 
-	# but the plan said "Runs clean in vendor/pokered".
+	rm -rf vendor/binjgb/out
 	cd vendor/pokered && make clean
