@@ -29,12 +29,9 @@ export class SpriteEncoder {
    * Encode an HTMLImageElement to GB 2bpp format
    */
   private encodeFromImage(img: HTMLImageElement, thresholds?: ThresholdConfig): Uint8Array {
-    // Process image: crop whitespace and scale to fit 56x56
     const imageData = this.processImage(img);
     const effectiveThresholds = thresholds ?? ConfigService.getThresholds();
     const pixels = this.quantize(imageData, effectiveThresholds);
-    
-    // Encode to 2bpp
     return this.encode2bpp(pixels);
   }
 
@@ -47,8 +44,6 @@ export class SpriteEncoder {
     const imageData = this.processImage(img);
     const effectiveThresholds = thresholds ?? ConfigService.getThresholds();
     const pixels = this.quantize(imageData, effectiveThresholds);
-    
-    // Convert quantized pixels back to viewable ImageData
     return this.pixelsToImageData(pixels);
   }
 

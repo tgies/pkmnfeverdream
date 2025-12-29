@@ -130,17 +130,13 @@ export class EmulatorWrapper {
    * Initialize the emulator with a ROM
    */
   async init(romData: Uint8Array): Promise<void> {
-    // Load Binjgb factory dynamically
     const BinjgbFactory = await loadBinjgb();
-    
-    // Call factory function to get the module instance
     this.module = await BinjgbFactory();
     
     // Allocate memory for ROM
     this.romPtr = this.module._malloc(romData.length);
     this.module.HEAPU8.set(romData, this.romPtr);
     
-    // Create emulator instance
     this.emulator = this.module._emulator_new_simple(
       this.romPtr,
       romData.length,

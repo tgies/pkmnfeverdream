@@ -2,7 +2,6 @@
  * Mock Gemini service for local development without API calls
  */
 
-// Pre-generated names that sound like Pokemon
 const MOCK_NAMES = [
   'Flamorb',
   'Aqualing',
@@ -25,7 +24,6 @@ function generateMockSpriteData(): Uint8Array {
   const bytesPerTile = 16;
   const data = new Uint8Array(tileCount * bytesPerTile);
   
-  // Create a simple pattern
   for (let tile = 0; tile < tileCount; tile++) {
     const row = Math.floor(tile / 7);
     const col = tile % 7;

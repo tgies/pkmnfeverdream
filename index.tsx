@@ -183,10 +183,7 @@ function gameLoop(): void {
     battleController?.update();
   }
   
-  // Always render
   renderFrame();
-  
-  // Schedule next frame
   requestAnimationFrame(gameLoop);
 }
 

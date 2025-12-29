@@ -61,9 +61,6 @@ export class BattleController {
     this.setupTestBattleMode();
     this.options.onPokemonGenerated?.(pokemon);
     this.setState('idle');
-    
-    // Install breakpoint NOW so it's ready when the battle starts
-    // LoadMonFrontSprite will be called during battle transition, before wIsInBattle changes
     this.injectionPending = true;
     this.installInjectionBreakpoint();
   }
@@ -112,9 +109,6 @@ export class BattleController {
       const pokemon = await this.generationService.getNext();
       this.currentPokemon = pokemon;
       this.options.onPokemonGenerated?.(pokemon);
-      
-      // Set up the enemy Pokemon in game memory immediately
-      // This must happen BEFORE the battle starts so the game uses our data
       this.setupTestBattleMode();
       
       this.setState('idle');
@@ -163,7 +157,6 @@ export class BattleController {
     
     // Track game readiness
     if (!this.gameReady) {
-      // Check if game has booted (check for some valid memory state)
       // The game is "ready" after it's past the initial boot
       this.gameReady = true;
       this.setState('idle');
@@ -219,18 +212,15 @@ export class BattleController {
       if (pokemon) {
         this.currentPokemon = pokemon;
         this.options.onPokemonGenerated?.(pokemon);
-        // Set up the enemy in game memory for the next battle
+        // Set up the next battle
         this.setupTestBattleMode();
         this.setState('idle');
-        
-        // Install breakpoint for next battle
         this.injectionPending = true;
         this.installInjectionBreakpoint();
         return;
       }
     }
     
-    // Not ready - show waiting state
     console.log('⏳ Waiting for Pokemon generation to complete...');
     this.setState('waiting_for_generation');
     
@@ -241,11 +231,9 @@ export class BattleController {
       const pokemon = await this.generationService.getNext();
       this.currentPokemon = pokemon;
       this.options.onPokemonGenerated?.(pokemon);
-      // Set up the enemy in game memory for the next battle
+      // Set up the next battle
       this.setupTestBattleMode();
       this.setState('idle');
-      
-      // Install breakpoint for next battle
       this.injectionPending = true;
       this.installInjectionBreakpoint();
     } catch (error) {
@@ -268,7 +256,6 @@ export class BattleController {
       return;
     }
     
-    // Set up test battle mode
     this.setupTestBattleMode();
   }
 
@@ -349,18 +336,10 @@ export class BattleController {
         );
       }
     }
-    
-    // ===== INJECT SPRITE =====
+
     this.injectSpriteSync(this.currentPokemon);
-    
-    // ===== SKIP ORIGINAL FUNCTION =====
-    // We've already written to VRAM, so skip LoadMonFrontSprite to prevent overwrite
     this.skipCurrentFunction();
-    
-    // Mark injection done for this battle
     this.injectionPending = false;
-    
-    // Remove the breakpoint (one-shot)
     this.emulator.removeBreakpoint(BattleController.LOAD_MON_FRONT_SPRITE_ADDR);
     this.breakpointInstalled = false;
     
@@ -400,8 +379,6 @@ export class BattleController {
       }
     }
     
-    // Fallback: use a known RET address in bank 0
-    // From pokered disassembly, address $0073 contains a RET after DisableLCD
     console.log('Using fallback RET address');
     return BattleController.KNOWN_RET_ADDR;
   }
@@ -416,8 +393,6 @@ export class BattleController {
     if (pokemon.sprite2bpp && pokemon.sprite2bpp.length > 0) {
       spriteData = pokemon.sprite2bpp;
     } else {
-      // Fallback: we can't load async in breakpoint callback
-      // Use a simple fallback sprite or skip sprite injection
       console.warn('No sprite2bpp data available, skipping sprite injection');
       return;
     }
@@ -429,7 +404,6 @@ export class BattleController {
     const originalLcdc = this.emulator.readMemory(lcdcAddr);
     const isLcdOn = (originalLcdc & 0x80) !== 0;
     
-    // Disable LCD to ensure VRAM is accessible
     if (isLcdOn) {
       this.emulator.writeMemory(lcdcAddr, originalLcdc & 0x7F);
     }
@@ -437,12 +411,10 @@ export class BattleController {
     // Write sprite data to vFrontPic (0x9000)
     this.emulator.writeMemoryBlock(0x9000, spriteData);
     
-    // Restore LCD
     if (isLcdOn) {
       this.emulator.writeMemory(lcdcAddr, originalLcdc);
     }
     
-    // Verify write
     const check = this.emulator.readMemory(0x9000);
     if (check !== spriteData[0]) {
       console.warn(`Sprite injection mismatch! Expected ${spriteData[0]}, got ${check}`);
