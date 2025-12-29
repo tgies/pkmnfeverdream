@@ -56,7 +56,6 @@ export class BattleController {
    * Called after both boot and generation are complete
    */
   injectGeneratedPokemon(pokemon: GeneratedPokemon): void {
-
     this.currentPokemon = pokemon;
     this.gameReady = true;
     this.setupTestBattleMode();
@@ -136,7 +135,7 @@ export class BattleController {
       return;
     }
     
-
+    console.log('Setting up TestBattle mode...');
     
     setupTestBattle(this.emulator, {
       playerPokemon: {
@@ -168,7 +167,6 @@ export class BattleController {
       // The game is "ready" after it's past the initial boot
       this.gameReady = true;
       this.setState('idle');
-
     }
     
     // Check battle state
@@ -176,7 +174,7 @@ export class BattleController {
     
     // Detect transition INTO battle
     if (currentBattleState !== 0 && this.lastBattleState === 0) {
-
+      console.log('Battle started! State:', currentBattleState);
       this.setState('in_battle');
       
       // Breakpoint should already be installed from when Pokemon was prepared
@@ -186,7 +184,7 @@ export class BattleController {
       }
       
       // Start pre-fetching the NEXT Pokemon while battle runs
-
+      console.log('🔮 Starting pre-fetch for next Pokemon...');
       this.generationService?.prefetch();
     }
     
@@ -216,7 +214,7 @@ export class BattleController {
   private async prepareNextPokemon(): Promise<void> {
     // Check if next Pokemon is already ready
     if (this.generationService?.isReady()) {
-
+      console.log('✅ Next Pokemon ready from pre-fetch!');
       const pokemon = this.generationService?.getNextIfReady();
       if (pokemon) {
         this.currentPokemon = pokemon;
@@ -233,7 +231,7 @@ export class BattleController {
     }
     
     // Not ready - show waiting state
-
+    console.log('⏳ Waiting for Pokemon generation to complete...');
     this.setState('waiting_for_generation');
     
     try {
@@ -283,7 +281,7 @@ export class BattleController {
       return;
     }
     
-
+    console.log(`Installing breakpoint at LoadMonFrontSprite ($${BattleController.LOAD_MON_FRONT_SPRITE_ADDR.toString(16)})`);
     
     this.emulator.addBreakpoint(
       BattleController.LOAD_MON_FRONT_SPRITE_ADDR,
@@ -301,18 +299,18 @@ export class BattleController {
     // Check if we're actually in battle - LoadMonFrontSprite is also called on title screen
     const isInBattle = this.emulator.readMemory(WRAM.wIsInBattle);
     if (isInBattle === 0) {
-
+      console.log('Breakpoint hit but not in battle (title screen?), letting normal code run');
       // Don't skip - let the normal sprite loading happen
       return;
     }
     
     if (!this.injectionPending || !this.currentPokemon) {
-
+      console.log('Breakpoint hit in battle but no injection pending, skipping function');
       this.skipCurrentFunction();
       return;
     }
     
-
+    console.log(`🎯 Breakpoint hit! Injecting ${this.currentPokemon.name}`);
     
     // ===== INJECT POKEMON DATA =====
     
@@ -366,7 +364,7 @@ export class BattleController {
     this.emulator.removeBreakpoint(BattleController.LOAD_MON_FRONT_SPRITE_ADDR);
     this.breakpointInstalled = false;
     
-
+    console.log('✅ One-shot injection complete!');
   }
   
   /**
@@ -376,7 +374,7 @@ export class BattleController {
     // Find a RET instruction (0xC9) to jump to
     const retAddr = this.findRetAddress();
     if (retAddr !== null) {
-
+      console.log(`Skipping to RET at $${retAddr.toString(16)}`);
       this.emulator.setPC(retAddr);
     } else {
       console.warn('Could not find RET instruction, breakpoint may cause issues');
@@ -404,7 +402,7 @@ export class BattleController {
     
     // Fallback: use a known RET address in bank 0
     // From pokered disassembly, address $0073 contains a RET after DisableLCD
-
+    console.log('Using fallback RET address');
     return BattleController.KNOWN_RET_ADDR;
   }
   
@@ -416,7 +414,6 @@ export class BattleController {
     let spriteData: Uint8Array | null = null;
     
     if (pokemon.sprite2bpp && pokemon.sprite2bpp.length > 0) {
-
       spriteData = pokemon.sprite2bpp;
     } else {
       // Fallback: we can't load async in breakpoint callback
@@ -425,7 +422,7 @@ export class BattleController {
       return;
     }
     
-
+    console.log(`Injecting ${spriteData.length} bytes of sprite data to VRAM 0x9000...`);
     
     // Use LCD Disable Hack for guaranteed VRAM access
     const lcdcAddr = 0xFF40;
@@ -449,8 +446,6 @@ export class BattleController {
     const check = this.emulator.readMemory(0x9000);
     if (check !== spriteData[0]) {
       console.warn(`Sprite injection mismatch! Expected ${spriteData[0]}, got ${check}`);
-    } else {
-
     }
   }
 }
