@@ -75,8 +75,6 @@ async function loadBinjgb(): Promise<() => Promise<BinjgbModule>> {
   }
 
   // Load dynamically by fetching and evaluating the script
-  console.log('Loading binjgb.js dynamically...');
-  
   const response = await fetch('./binjgb.js');
   const scriptText = await response.text();
   
@@ -191,7 +189,6 @@ export class EmulatorWrapper {
           
           // If PC didn't change after callback, we'd loop forever - break out
           if (this.getPC() === pc) {
-            console.warn(`Breakpoint callback at $${pc.toString(16)} did not change PC, breaking to avoid infinite loop`);
             this.currentTicks = actualTicks;
             break;
           }

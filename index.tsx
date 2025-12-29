@@ -349,25 +349,21 @@ function setupSettings(): void {
   // Prompt template changes (save on blur to avoid constant updates while typing)
   namePromptEl.addEventListener('blur', () => {
     ConfigService.setNamePromptTemplate(namePromptEl.value);
-    console.log('📝 Name prompt template updated');
   });
 
   imagePromptEl.addEventListener('blur', () => {
     ConfigService.setImagePromptTemplate(imagePromptEl.value);
-    console.log('📝 Image prompt template updated');
   });
 
   // Reset buttons for prompts
   resetNamePromptEl.addEventListener('click', () => {
     const defaultPrompt = ConfigService.resetNamePrompt();
     namePromptEl.value = defaultPrompt;
-    console.log('↺ Name prompt reset to default');
   });
 
   resetImagePromptEl.addEventListener('click', () => {
     const defaultPrompt = ConfigService.resetImagePrompt();
     imagePromptEl.value = defaultPrompt;
-    console.log('↺ Image prompt reset to default');
   });
 
   // Name temperature slider
@@ -383,7 +379,6 @@ function setupSettings(): void {
     ConfigService.setNameTemperature(defaultTemp);
     nameTemperatureEl.value = String(defaultTemp);
     nameTemperatureValEl.textContent = defaultTemp.toFixed(1);
-    console.log('↺ Name temperature reset to default');
   });
 
   // Threshold slider changes (live update)
@@ -420,7 +415,6 @@ function setupSettings(): void {
   regenerateBtnEl.addEventListener('click', async () => {
     if (!generationService) return;
     
-    console.log('🔄 Regenerating with new settings...');
     updateStatus('🔄 Regenerating with new settings...');
     
     // Invalidate queue and trigger new generation

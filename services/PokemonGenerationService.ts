@@ -112,7 +112,7 @@ export class PokemonGenerationService {
    * Used when config changes require regeneration with new settings
    */
   invalidateQueue(): void {
-    console.log(`🗑️ Invalidating ${this.queue.length} queued Pokemon`);
+
     this.queue = [];
     // Note: if generation is in progress, it will complete but the result
     // may use old settings. The caller should trigger a new generation after.
@@ -123,7 +123,7 @@ export class PokemonGenerationService {
    */
   setCameraSource(photoDataUrl: string): void {
     this.cameraSourceDataUrl = photoDataUrl;
-    console.log('📷 Camera source set for generation');
+
   }
   
   /**
@@ -131,7 +131,7 @@ export class PokemonGenerationService {
    */
   clearCameraSource(): void {
     this.cameraSourceDataUrl = null;
-    console.log('📷 Camera source cleared');
+
   }
   
   /**
@@ -243,7 +243,7 @@ export class PokemonGenerationService {
         return await this.generateFromMock(actualLevel);
       }
     } else {
-      console.log('API not available, using mock generation');
+      console.warn('API not available, using mock generation');
       return await this.generateFromMock(actualLevel);
     }
   }
@@ -269,7 +269,7 @@ export class PokemonGenerationService {
     // Generate sprite image - use camera source if available
     let spriteDataUrl: string;
     if (this.cameraSourceDataUrl) {
-      console.log('📷 Using camera source for sprite generation');
+
       const prompt = ConfigService.getCameraPrompt(name, typeName);
       spriteDataUrl = await transformPhotoToSprite(this.cameraSourceDataUrl, prompt);
     } else {
@@ -279,7 +279,6 @@ export class PokemonGenerationService {
     
     // Convert sprite to 2bpp
     const sprite2bpp = await this.spriteEncoder.encodeFromDataUrl(spriteDataUrl);
-    console.log(`🔢 Encoded sprite to 2bpp (${sprite2bpp.length} bytes)`);
     
     // Generate stats
     const stats = generateRandomStats();

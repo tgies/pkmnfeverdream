@@ -116,7 +116,7 @@ export function setupTestBattle(
   emulator: EmulatorWrapper,
   setup: BattleSetup
 ): void {
-  console.log('Setting up TestBattle mode...');
+
   
   // 1. Set Earth Badge for obedience (prevents level 100 pokemon from disobeying)
   emulator.writeMemory(WRAM.wObtainedBadges, 1 << 7); // BIT_EARTHBADGE
@@ -169,9 +169,7 @@ export function setupTestBattle(
   // Write enemy nickname
   emulator.writeMemoryBlock(WRAM.wEnemyMonNick, encodeString(setup.enemyPokemon.name.toUpperCase()));
   
-  console.log(`TestBattle setup complete:`);
-  console.log(`  Player: ${setup.playerPokemon.name ?? 'PLAYER'} Lv.${setup.playerPokemon.level}`);
-  console.log(`  Enemy: ${setup.enemyPokemon.name} Lv.${setup.enemyPokemon.level}`);
+
 }
 
 /**
@@ -184,7 +182,7 @@ export function triggerWildBattle(
   enemyLevel: number,
   enemyName: string
 ): void {
-  console.log(`Triggering wild battle: ${enemyName} Lv.${enemyLevel}`);
+
   
   // Set the enemy species
   emulator.writeMemory(WRAM.wCurOpponent, enemySpecies);
